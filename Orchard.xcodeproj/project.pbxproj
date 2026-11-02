@@ -9,16 +9,29 @@
 /* Begin PBXBuildFile section */
 		2BB54B5E6958DB36F8EDC416 /* M0BootstrapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */; };
 		2D8D2B56379298FD0DC94EFE /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2923E27246F0A69F81620199 /* TodayView.swift */; };
+		3CF12F78B9ED735DFD71FBE6 /* SleepEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F5B503254EEA91920E7784E /* SleepEntry.swift */; };
 		454ED84BFE4ABC04123E3D5E /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320D2D196AA102C566CFD341 /* InsightsView.swift */; };
+		4720B7505F8A07E4CC184195 /* Anchor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7338539536121DD0390285BF /* Anchor.swift */; };
 		4AA0C7ACB8EF0DE51E84D5DF /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A0FEA15B915829B9D3C9A231 /* Localizable.xcstrings */; };
 		53950293CE12B9518A65CD43 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B237F2F944DBFD6CEB75D33A /* PlanView.swift */; };
+		56FDB15A5673C1F112CB2C8F /* PlanModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D895EF327F0061D00E0CEA /* PlanModelTests.swift */; };
+		57DEF45D1EE69E28940F079A /* ScheduleResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 757B8E4ECCF41EED0A404085 /* ScheduleResolverTests.swift */; };
 		6157FD6058A9A2DB0DD9B1B4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67A9324DED84D392E498A021 /* SettingsView.swift */; };
+		64FE976FB25A7D861A7D5BF8 /* ScheduledEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EF2E701BADA158F688308FD /* ScheduledEvent.swift */; };
+		66210E87B68DBAF002F7B0F4 /* LogEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E1A404E26742514F6217AC /* LogEntry.swift */; };
+		663190FD7C86F3EB8F8F548B /* ScheduleResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15EF9A54881C4D596620137F /* ScheduleResolver.swift */; };
+		724CCE62A5A54B5CAE506E16 /* DayTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AC4ED3759318BEAF80F585D /* DayTemplate.swift */; };
 		8A37B5A22832872774E5F716 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D8246E1CF02C0806892A29 /* LogView.swift */; };
+		921543FE8EA4511045CB0BB1 /* PlanLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 425E0CD6AC22BC07FCD52966 /* PlanLoader.swift */; };
+		92FA3BC6E59EBF81401305A2 /* Plan.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD2C14810C2A22F4E44E7312 /* Plan.swift */; };
 		A1CA02B9F07831A6A9B6BD4A /* ColorTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C66352A9543BCAB049551DB /* ColorTokens.swift */; };
+		AD21B113327E77A6BB4BB165 /* Rule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89B27C014C6FA21A411F7C86 /* Rule.swift */; };
 		C46381AD253A73E0FA0CDD05 /* OrchardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07DFE0766F4DBB3FC800F2E4 /* OrchardApp.swift */; };
 		CEC061EB25F166E0550D40FD /* DomainPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D850188FDE81A57B3A8344 /* DomainPlaceholder.swift */; };
 		D6420D7DC44FCE73A3C05198 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ED446121583289DBD7DBA6F /* AppContainer.swift */; };
 		D67C6BA0AF34355B64853D30 /* plan.sample.json in Resources */ = {isa = PBXBuildFile; fileRef = 58ACA03B78BD218D9B2A3E1B /* plan.sample.json */; };
+		DA45754EF34F9ED74229CAE0 /* TrainingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B02368F8A7FAB64E492C4DC3 /* TrainingSession.swift */; };
+		FA208A5F92593959730099D0 /* PlanItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CFDA6F06A7CF8763C3F5038 /* PlanItem.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,18 +48,31 @@
 		07DFE0766F4DBB3FC800F2E4 /* OrchardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrchardApp.swift; sourceTree = "<group>"; };
 		13D850188FDE81A57B3A8344 /* DomainPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainPlaceholder.swift; sourceTree = "<group>"; };
 		15D8246E1CF02C0806892A29 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
+		15EF9A54881C4D596620137F /* ScheduleResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleResolver.swift; sourceTree = "<group>"; };
 		1B9961856CB85AD4AD1E0FB3 /* Orchard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Orchard.entitlements; sourceTree = "<group>"; };
 		1C66352A9543BCAB049551DB /* ColorTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorTokens.swift; sourceTree = "<group>"; };
 		2923E27246F0A69F81620199 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0BootstrapTests.swift; sourceTree = "<group>"; };
 		320D2D196AA102C566CFD341 /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		425E0CD6AC22BC07FCD52966 /* PlanLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanLoader.swift; sourceTree = "<group>"; };
+		42D895EF327F0061D00E0CEA /* PlanModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanModelTests.swift; sourceTree = "<group>"; };
+		4CFDA6F06A7CF8763C3F5038 /* PlanItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanItem.swift; sourceTree = "<group>"; };
 		58ACA03B78BD218D9B2A3E1B /* plan.sample.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = plan.sample.json; sourceTree = "<group>"; };
 		67A9324DED84D392E498A021 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		6AC4ED3759318BEAF80F585D /* DayTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayTemplate.swift; sourceTree = "<group>"; };
+		7338539536121DD0390285BF /* Anchor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Anchor.swift; sourceTree = "<group>"; };
+		757B8E4ECCF41EED0A404085 /* ScheduleResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleResolverTests.swift; sourceTree = "<group>"; };
+		89B27C014C6FA21A411F7C86 /* Rule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rule.swift; sourceTree = "<group>"; };
 		8ED446121583289DBD7DBA6F /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		8EF2E701BADA158F688308FD /* ScheduledEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduledEvent.swift; sourceTree = "<group>"; };
+		8F5B503254EEA91920E7784E /* SleepEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepEntry.swift; sourceTree = "<group>"; };
 		A0FEA15B915829B9D3C9A231 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		AD2C14810C2A22F4E44E7312 /* Plan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plan.swift; sourceTree = "<group>"; };
+		B02368F8A7FAB64E492C4DC3 /* TrainingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingSession.swift; sourceTree = "<group>"; };
 		B237F2F944DBFD6CEB75D33A /* PlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanView.swift; sourceTree = "<group>"; };
 		B74F3BFA4C9F8BAB1B1373AA /* OrchardTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OrchardTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BDED28506F494BA8764489E8 /* Orchard.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Orchard.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6E1A404E26742514F6217AC /* LogEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogEntry.swift; sourceTree = "<group>"; };
 		E7DF00D61173E8EB690CE9EA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -123,6 +149,9 @@
 			isa = PBXGroup;
 			children = (
 				13D850188FDE81A57B3A8344 /* DomainPlaceholder.swift */,
+				425E0CD6AC22BC07FCD52966 /* PlanLoader.swift */,
+				15EF9A54881C4D596620137F /* ScheduleResolver.swift */,
+				9A580377FB04EC95982D48A1 /* Models */,
 			);
 			path = Domain;
 			sourceTree = "<group>";
@@ -149,6 +178,22 @@
 				67A9324DED84D392E498A021 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		9A580377FB04EC95982D48A1 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				7338539536121DD0390285BF /* Anchor.swift */,
+				6AC4ED3759318BEAF80F585D /* DayTemplate.swift */,
+				C6E1A404E26742514F6217AC /* LogEntry.swift */,
+				AD2C14810C2A22F4E44E7312 /* Plan.swift */,
+				4CFDA6F06A7CF8763C3F5038 /* PlanItem.swift */,
+				89B27C014C6FA21A411F7C86 /* Rule.swift */,
+				8EF2E701BADA158F688308FD /* ScheduledEvent.swift */,
+				8F5B503254EEA91920E7784E /* SleepEntry.swift */,
+				B02368F8A7FAB64E492C4DC3 /* TrainingSession.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		A44EE50E77C87E7F8E6DF172 /* Resources */ = {
@@ -181,6 +226,8 @@
 			isa = PBXGroup;
 			children = (
 				2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */,
+				42D895EF327F0061D00E0CEA /* PlanModelTests.swift */,
+				757B8E4ECCF41EED0A404085 /* ScheduleResolverTests.swift */,
 			);
 			path = OrchardTests;
 			sourceTree = "<group>";
@@ -277,6 +324,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				2BB54B5E6958DB36F8EDC416 /* M0BootstrapTests.swift in Sources */,
+				56FDB15A5673C1F112CB2C8F /* PlanModelTests.swift in Sources */,
+				57DEF45D1EE69E28940F079A /* ScheduleResolverTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,15 +333,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4720B7505F8A07E4CC184195 /* Anchor.swift in Sources */,
 				D6420D7DC44FCE73A3C05198 /* AppContainer.swift in Sources */,
 				A1CA02B9F07831A6A9B6BD4A /* ColorTokens.swift in Sources */,
+				724CCE62A5A54B5CAE506E16 /* DayTemplate.swift in Sources */,
 				CEC061EB25F166E0550D40FD /* DomainPlaceholder.swift in Sources */,
 				454ED84BFE4ABC04123E3D5E /* InsightsView.swift in Sources */,
+				66210E87B68DBAF002F7B0F4 /* LogEntry.swift in Sources */,
 				8A37B5A22832872774E5F716 /* LogView.swift in Sources */,
 				C46381AD253A73E0FA0CDD05 /* OrchardApp.swift in Sources */,
+				92FA3BC6E59EBF81401305A2 /* Plan.swift in Sources */,
+				FA208A5F92593959730099D0 /* PlanItem.swift in Sources */,
+				921543FE8EA4511045CB0BB1 /* PlanLoader.swift in Sources */,
 				53950293CE12B9518A65CD43 /* PlanView.swift in Sources */,
+				AD21B113327E77A6BB4BB165 /* Rule.swift in Sources */,
+				663190FD7C86F3EB8F8F548B /* ScheduleResolver.swift in Sources */,
+				64FE976FB25A7D861A7D5BF8 /* ScheduledEvent.swift in Sources */,
 				6157FD6058A9A2DB0DD9B1B4 /* SettingsView.swift in Sources */,
+				3CF12F78B9ED735DFD71FBE6 /* SleepEntry.swift in Sources */,
 				2D8D2B56379298FD0DC94EFE /* TodayView.swift in Sources */,
+				DA45754EF34F9ED74229CAE0 /* TrainingSession.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
