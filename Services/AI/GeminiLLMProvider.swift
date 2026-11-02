@@ -5,17 +5,26 @@ import OrchardDomain
 #endif
 
 /// Information describing a Gemini free-tier model in the fallback chain.
-public struct GeminiModelInfo: Sendable, Codable, Equatable {
+public struct GeminiModelInfo: Sendable, Codable, Equatable, Identifiable {
     public let id: String
     public let displayName: String
     public let descriptionGreek: String
+    public let category: String
     public let tier: String
     public let rpmFree: Int
 
-    public init(id: String, displayName: String, descriptionGreek: String, tier: String, rpmFree: Int) {
+    public init(
+        id: String,
+        displayName: String,
+        descriptionGreek: String,
+        category: String,
+        tier: String,
+        rpmFree: Int
+    ) {
         self.id = id
         self.displayName = displayName
         self.descriptionGreek = descriptionGreek
+        self.category = category
         self.tier = tier
         self.rpmFree = rpmFree
     }
@@ -49,63 +58,135 @@ public struct ConnectionTestResult: Sendable, Codable, Equatable {
 
 /// Production LLM provider connecting to Google Gemini API using the user's
 /// "Bring Your Own Key" (stored securely in Keychain) with an automated Fallback Chain
-/// across all free-tier models available in Google AI Studio.
+/// covering all available Flash, Flash-Lite, and Pro generations (3.x, 2.5, 2.0, 1.5)
+/// available on Google AI Studio.
 public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
     public let id: String = "gemini"
     public let name: String = "Google Gemini (Bring Your Own Key)"
 
-    /// Standard fallback chain of free-tier models available in Google AI Studio.
-    /// Follows priority: Frontier Flash 2.5 -> Standard 2.0 -> Flash-Lite 2.0 -> Workhorse 1.5 -> High-throughput 8B -> Reasoning Pro 1.5.
+    /// Standard fallback chain of all free-tier and frontier models available in Google AI Studio.
+    /// Follows priority: 3.x Frontier Flash/Lite/Pro -> 2.5 Flash/Lite/Pro -> 2.0 Flash/Lite -> 1.5 Workhorse/8B/Pro.
     public static let defaultFreeModelChain: [String] = [
+        // Gemini 3.x Family
+        "gemini-3.7-flash",
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-pro",
+        // Gemini 2.5 Family
         "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-pro",
+        // Gemini 2.0 Family
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
+        // Gemini 1.5 Family
         "gemini-1.5-flash",
         "gemini-1.5-flash-8b",
         "gemini-1.5-pro"
     ]
 
-    /// Metadata describing each supported free-tier model.
+    /// Metadata describing each supported model across 3.x, 2.5, 2.0, and 1.5 families.
     public static let availableModelMetadata: [GeminiModelInfo] = [
+        // Gemini 3.x Family
         GeminiModelInfo(
-            id: "gemini-2.5-flash",
-            displayName: "Gemini 2.5 Flash",
-            descriptionGreek: "Κορυφαίο σύγχρονο Flash μοντέλο με υψηλή ταχύτητα και συλλογιστική.",
+            id: "gemini-3.7-flash",
+            displayName: "Gemini 3.7 Flash",
+            descriptionGreek: "Frontier 3.7 Flash με κορυφαία ταχύτητα, multimodal κατανόηση & σύγχρονη συλλογιστική.",
+            category: "Gemini 3.x Series",
             tier: "Free Tier (Google AI Studio)",
             rpmFree: 15
         ),
         GeminiModelInfo(
+            id: "gemini-3.5-flash",
+            displayName: "Gemini 3.5 Flash",
+            descriptionGreek: "Προηγμένο Flash 3.5 για άμεση, υψηλής ακρίβειας κατανόηση γευμάτων & μακροστοιχείων.",
+            category: "Gemini 3.x Series",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 15
+        ),
+        GeminiModelInfo(
+            id: "gemini-3.5-flash-lite",
+            displayName: "Gemini 3.5 Flash Lite",
+            descriptionGreek: "Υπερ-ελαφρύ & ταχύτατο Flash-Lite 3.5 για μηδενικό latency και υψηλό throughput.",
+            category: "Gemini 3.x Series",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 30
+        ),
+        GeminiModelInfo(
+            id: "gemini-3.1-pro",
+            displayName: "Gemini 3.1 Pro",
+            descriptionGreek: "Frontier Pro 3.1 για σύνθετες διατροφικές συσχετίσεις και βαθιά λογική.",
+            category: "Gemini 3.x Series",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 5
+        ),
+
+        // Gemini 2.5 Family
+        GeminiModelInfo(
+            id: "gemini-2.5-flash",
+            displayName: "Gemini 2.5 Flash",
+            descriptionGreek: "Καθιερωμένο flagship 2.5 Flash με ισορροπημένη απόδοση και ταχύτητα.",
+            category: "Gemini 2.5 Series",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 15
+        ),
+        GeminiModelInfo(
+            id: "gemini-2.5-flash-lite",
+            displayName: "Gemini 2.5 Flash Lite",
+            descriptionGreek: "Lightweight 2.5 Flash-Lite με άμεση απόκριση και χαμηλή κατανάλωση πόρων.",
+            category: "Gemini 2.5 Series",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 30
+        ),
+        GeminiModelInfo(
+            id: "gemini-2.5-pro",
+            displayName: "Gemini 2.5 Pro",
+            descriptionGreek: "Frontier Pro 2.5 για εξειδικευμένους υπολογισμούς μακροστοιχείων & ανάλυση.",
+            category: "Gemini 2.5 Series",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 5
+        ),
+
+        // Gemini 2.0 Family
+        GeminiModelInfo(
             id: "gemini-2.0-flash",
             displayName: "Gemini 2.0 Flash",
-            descriptionGreek: "Εξαιρετικά ταχύ standard 2.0 μοντέλο για άμεσες αναλύσεις.",
+            descriptionGreek: "Standard 2.0 Flash μοντέλο ευρείας διαθεσιμότητας.",
+            category: "Gemini 2.0 Series",
             tier: "Free Tier (Google AI Studio)",
             rpmFree: 15
         ),
         GeminiModelInfo(
             id: "gemini-2.0-flash-lite",
             displayName: "Gemini 2.0 Flash Lite",
-            descriptionGreek: "Εξαιρετικά ελαφρύ μοντέλο με χαμηλό latency όταν υπάρχει φόρτος.",
+            descriptionGreek: "Lite 2.0 έκδοση για άμεση εξυπηρέτηση όταν υπάρχει συμφόρηση.",
+            category: "Gemini 2.0 Series",
             tier: "Free Tier (Google AI Studio)",
             rpmFree: 30
         ),
+
+        // Gemini 1.5 Family
         GeminiModelInfo(
             id: "gemini-1.5-flash",
             displayName: "Gemini 1.5 Flash",
-            descriptionGreek: "Το πιο αξιόπιστο και δοκιμασμένο workhorse μοντέλο της Google.",
+            descriptionGreek: "Το διαχρονικό workhorse της Google με αποδεδειγμένη μέγιστη σταθερότητα.",
+            category: "Gemini 1.5 Series",
             tier: "Free Tier (Google AI Studio)",
             rpmFree: 15
         ),
         GeminiModelInfo(
             id: "gemini-1.5-flash-8b",
             displayName: "Gemini 1.5 Flash 8B",
-            descriptionGreek: "8-Billion parameter μοντέλο, ιδανικό για υψηλό throughput & backup.",
+            descriptionGreek: "8-Billion parameter lightweight μοντέλο για ταχύτατη εφεδρεία.",
+            category: "Gemini 1.5 Series",
             tier: "Free Tier (Google AI Studio)",
             rpmFree: 15
         ),
         GeminiModelInfo(
             id: "gemini-1.5-pro",
             displayName: "Gemini 1.5 Pro",
-            descriptionGreek: "Μοντέλο σύνθετης συλλογιστικής ως τελικό fallback.",
+            descriptionGreek: "Frontier Pro 1.5 ως το απόλυτο safety-net fallback.",
+            category: "Gemini 1.5 Series",
             tier: "Free Tier (Google AI Studio)",
             rpmFree: 2
         )
@@ -117,12 +198,36 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
 
     public init(
         apiKey: String? = nil,
+        preferredModel: String? = nil,
         modelChain: [String] = GeminiLLMProvider.defaultFreeModelChain,
         session: URLSession = .shared
     ) {
         self.customApiKey = apiKey
-        self.modelChain = modelChain.isEmpty ? GeminiLLMProvider.defaultFreeModelChain : modelChain
         self.urlSession = session
+
+        let baseChain = modelChain.isEmpty ? GeminiLLMProvider.defaultFreeModelChain : modelChain
+
+        // If user configured a preferred model, place it at the front of the fallback chain
+        let resolvedPreferred: String? = {
+            if let explicit = preferredModel, !explicit.isEmpty, explicit != "auto" {
+                return explicit
+            }
+            if let saved = UserDefaults.standard.string(forKey: "orchard_gemini_preferred_model"),
+               !saved.isEmpty, saved != "auto" {
+                return saved
+            }
+            return nil
+        }()
+
+        if let preferred = resolvedPreferred {
+            var chain = [preferred]
+            for m in baseChain where m != preferred {
+                chain.append(m)
+            }
+            self.modelChain = chain
+        } else {
+            self.modelChain = baseChain
+        }
     }
 
     public var resolvedApiKey: String? {
@@ -139,7 +244,7 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
         return true
     }
 
-    // MARK: - Generation via Fallback Chain
+    // MARK: - Generation via Multi-Model Fallback Chain
     public func generate<T: Decodable & Sendable>(
         prompt: String,
         systemPrompt: String,
@@ -187,7 +292,7 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
                     throw LLMError.unavailable("Gemini API Key rejected: \(error.message)")
                 }
 
-                // Fallback to next model in chain for 429 (rate limit), 503 (overload), 404 (not found), etc.
+                // Fallback to next model in chain for 429 (rate limit), 503 (overload), 404 (not enabled yet), etc.
                 continue
             } catch {
                 let durationMs = (CFAbsoluteTimeGetCurrent() - start) * 1000.0

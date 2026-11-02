@@ -36,6 +36,7 @@ public struct SettingsView: View {
     @AppStorage("orchard_ai_enabled") private var aiEnabled: Bool = true
     @AppStorage("orchard_ai_provider") private var selectedAIProvider: String = "gemini"
     @AppStorage("orchard_ai_api_key") private var apiKey: String = ""
+    @AppStorage("orchard_gemini_preferred_model") private var preferredGeminiModel: String = "auto"
     @State private var showApiKeySavedToast: Bool = false
     @State private var isTestingGeminiConnection: Bool = false
     @State private var geminiTestResult: ConnectionTestResult? = nil
@@ -474,7 +475,10 @@ public struct SettingsView: View {
                                     isTestingGeminiConnection = true
                                     geminiTestResult = nil
                                     Task {
-                                        let provider = GeminiLLMProvider(apiKey: apiKey.isEmpty ? nil : apiKey)
+                                        let provider = GeminiLLMProvider(
+                                            apiKey: apiKey.isEmpty ? nil : apiKey,
+                                            preferredModel: preferredGeminiModel
+                                        )
                                         let result = try? await provider.testConnection()
                                         await MainActor.run {
                                             isTestingGeminiConnection = false
@@ -496,6 +500,26 @@ public struct SettingsView: View {
                                 }
                                 .disabled(isTestingGeminiConnection)
                             }
+                        }
+
+                        // Preferred Starting Model Selector
+                        if selectedAIProvider == "gemini" {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("ΠΡΟΤΙΜΩΜΕΝΟ ΜΟΝΤΕΛΟ ΕΚΚΙΝΗΣΗΣ:")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                                    .tracking(0.6)
+
+                                Picker("Μοντέλο Εκκίνησης", selection: $preferredGeminiModel) {
+                                    Text("⚡ Αυτόματη Ιεραρχία (3.x ➔ 2.5 ➔ 2.0 ➔ 1.5)").tag("auto")
+                                    ForEach(GeminiLLMProvider.availableModelMetadata) { model in
+                                        Text("\(model.displayName) (\(model.category))").tag(model.id)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                            }
+                            .padding(.top, 4)
                         }
 
                         // Connection Test Result Banner
@@ -528,14 +552,14 @@ public struct SettingsView: View {
 
                     // Gemini Fallback Chain Visualization
                     if selectedAIProvider == "gemini" {
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 8) {
                             HStack {
                                 Text("ΑΛΥΣΙΔΑ FALLBACK (FREE TIER)")
                                     .font(.system(size: 10, weight: .bold, design: .rounded))
                                     .foregroundStyle(.secondary)
                                     .tracking(0.6)
                                 Spacer()
-                                Text("6 Μοντέλα")
+                                Text("12 Μοντέλα (3.x, 2.5, 2.0, 1.5)")
                                     .font(.system(size: 9, weight: .semibold, design: .rounded))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -553,25 +577,33 @@ public struct SettingsView: View {
                                         HStack(spacing: 4) {
                                             Text(model.displayName)
                                                 .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                            Text("(\(model.rpmFree) RPM)")
-                                                .font(.system(size: 9, weight: .medium, design: .rounded))
+                                            Text("(\(model.category))")
+                                                .font(.system(size: 9, weight: .regular, design: .rounded))
+                                                .foregroundStyle(.secondary)
+                                            Spacer()
+                                            Text("\(model.rpmFree) RPM")
+                                                .font(.system(size: 9, weight: .medium, design: .monospaced))
                                                 .foregroundStyle(.secondary)
                                         }
                                         Text(model.descriptionGreek)
                                             .font(.system(size: 9, design: .rounded))
                                             .foregroundStyle(.secondary)
                                     }
-                                    Spacer()
-                                    if index < GeminiLLMProvider.availableModelMetadata.count - 1 {
-                                        Image(systemName: "arrow.down")
-                                            .font(.system(size: 8, weight: .semibold))
-                                            .foregroundStyle(.tertiary)
-                                    }
                                 }
                                 .padding(.vertical, 2)
+
+                                if index < GeminiLLMProvider.availableModelMetadata.count - 1 {
+                                    HStack {
+                                        Spacer()
+                                        Image(systemName: "arrow.down")
+                                            .font(.system(size: 7, weight: .semibold))
+                                            .foregroundStyle(.tertiary)
+                                        Spacer()
+                                    }
+                                }
                             }
 
-                            Text("Σε περίπτωση rate limit (429) ή υπερφόρτωσης (503), γίνεται αυτόματη μετάβαση στο επόμενο δωρεάν μοντέλο.")
+                            Text("Σε περίπτωση rate limit (429) ή υπερφόρτωσης (503), η εφαρμογή μεταβαίνει αυτόματα στο επόμενο διαθέσιμο μοντέλο χωρίς καμία διακοπή.")
                                 .font(.system(size: 10, design: .rounded))
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 2)

@@ -277,4 +277,58 @@ final class GeminiFallbackChainTests: XCTestCase {
         XCTAssertEqual(diagnostic.attemptedModels, ["gemini-2.5-flash", "gemini-2.0-flash"])
         XCTAssertTrue(diagnostic.message.contains("Fallback στο 'gemini-2.0-flash'"))
     }
+
+    // MARK: - Test 7: Gemini 3.x Family Prioritization & Fallback Chain
+    func testGemini3FamilyPrioritizationAndFallback() async throws {
+        // Given: 3.7 hits 429, 3.5 hits 503, 3.5-flash-lite succeeds
+        GeminiMockURLProtocol.requestHandlers["gemini-3.7-flash"] = { req in
+            self.makeErrorResponse(url: req.url!, status: 429, message: "RESOURCE_EXHAUSTED")
+        }
+        GeminiMockURLProtocol.requestHandlers["gemini-3.5-flash"] = { req in
+            self.makeErrorResponse(url: req.url!, status: 503, message: "UNAVAILABLE")
+        }
+        GeminiMockURLProtocol.requestHandlers["gemini-3.5-flash-lite"] = { req in
+            self.makeSuccessResponse(url: req.url!, json: "{\"meal\": \"Oats & Whey\", \"calories\": 380}")
+        }
+
+        let provider = GeminiLLMProvider(
+            apiKey: "AIzaSy_VALID_KEY",
+            session: customSession
+        )
+
+        // Verify default chain starts with 3.7, 3.5, 3.5-lite, 3.1-pro
+        XCTAssertEqual(provider.modelChain.first, "gemini-3.7-flash")
+        XCTAssertTrue(provider.modelChain.contains("gemini-3.5-flash"))
+        XCTAssertTrue(provider.modelChain.contains("gemini-3.5-flash-lite"))
+        XCTAssertTrue(provider.modelChain.contains("gemini-3.1-pro"))
+        XCTAssertTrue(provider.modelChain.contains("gemini-2.5-pro"))
+
+        let result = try await provider.generate(
+            prompt: "Oats and whey breakfast",
+            systemPrompt: "Nutrition",
+            schema: TestAiNutrition.self
+        )
+
+        XCTAssertEqual(result.meal, "Oats & Whey")
+        XCTAssertEqual(result.calories, 380)
+        XCTAssertEqual(GeminiMockURLProtocol.requestsReceived.count, 3)
+        XCTAssertTrue(GeminiMockURLProtocol.requestsReceived[0].contains("gemini-3.7-flash"))
+        XCTAssertTrue(GeminiMockURLProtocol.requestsReceived[1].contains("gemini-3.5-flash"))
+        XCTAssertTrue(GeminiMockURLProtocol.requestsReceived[2].contains("gemini-3.5-flash-lite"))
+    }
+
+    // MARK: - Test 8: Preferred Model Configuration Moves Directly to Head of Chain
+    func testPreferredModelConfigurationMovesDirectlyToHeadOfChain() {
+        let provider = GeminiLLMProvider(
+            apiKey: "AIzaSy_KEY",
+            preferredModel: "gemini-2.5-pro",
+            session: customSession
+        )
+
+        XCTAssertEqual(provider.modelChain.first, "gemini-2.5-pro")
+        // Check no duplicates and other models are present
+        XCTAssertEqual(provider.modelChain.filter { $0 == "gemini-2.5-pro" }.count, 1)
+        XCTAssertEqual(provider.modelChain.count, GeminiLLMProvider.defaultFreeModelChain.count)
+        XCTAssertEqual(provider.modelChain[1], "gemini-3.7-flash")
+    }
 }
