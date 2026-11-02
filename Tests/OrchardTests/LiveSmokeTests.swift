@@ -438,4 +438,157 @@ final class LiveSmokeTests: XCTestCase {
         let expiredAlerts = guardExpired.makeExpiryAlertSpecs(now: now)
         XCTAssertTrue(expiredAlerts.isEmpty, "Expiry alerts must be suppressed when certificate is already expired")
     }
+
+    // MARK: - Scenario 6: AutoSleep & Bevel Sleep Architecture & Apple Watch Ultra 3
+
+    /// Scenario 6:
+    /// - User sleeps with Apple Watch Ultra 3.
+    /// - HealthStore captures 450 min total asleep: 90m deep sleep, 110m REM, 250m core, 30m awake (480m in bed).
+    /// - Verify sleep efficiency calculation: 450 / 480 = 93.75%.
+    /// - Verify restorative sleep calculation: (90 + 110) / 450 = 44.44% (in the ideal 35-45% band).
+    /// - Verify sleep debt relative to 8-hour target: 450 - 480 = -30m deficit.
+    /// - Verify Recovery Readiness Score: high subjective rating (5/5) + high efficiency + high restorative sleep yields >= 85 (optimal readiness).
+    func testScenario6_AutoSleepBevelHealthKitSleepMetrics() async throws {
+        let sampleDate = calendar.date(from: DateComponents(year: 2026, month: 11, day: 3, hour: 7, minute: 30))!
+        let sleep = SleepEntry(
+            date: sampleDate,
+            rating: 5,
+            tags: ["Ξεκούραστος", "Βαθύς Ύπνος", "Apple Watch Ultra 3"],
+            asleepMinutes: 450,
+            deepSleepMinutes: 90,
+            remSleepMinutes: 110,
+            coreSleepMinutes: 250,
+            awakeMinutes: 30,
+            inBedMinutes: 480
+        )
+
+        // Efficiency
+        let efficiency = try XCTUnwrap(sleep.efficiencyPercentage)
+        XCTAssertEqual(efficiency, 93.75, accuracy: 0.1)
+
+        // Restorative percentage
+        let restorative = try XCTUnwrap(sleep.restorativePercentage)
+        XCTAssertEqual(restorative, 44.44, accuracy: 0.1)
+
+        // Sleep debt
+        XCTAssertEqual(sleep.sleepDebtMinutes, -30)
+
+        // Recovery score: 5 * 12 (60) + (93.75 * 0.25 = 23.4) + min(20, 44.44 * 0.5 = 20.0) = 103 -> clamped to 100
+        XCTAssertEqual(sleep.recoveryScore, 100)
+
+        // Simulate a restless night: rating 2, 330 min asleep, 30m deep, 40m REM, 90m awake, 420m in bed
+        let restlessSleep = SleepEntry(
+            date: sampleDate,
+            rating: 2,
+            tags: ["Καφεΐνη αργά", "Στρες"],
+            asleepMinutes: 330,
+            deepSleepMinutes: 30,
+            remSleepMinutes: 40,
+            coreSleepMinutes: 260,
+            awakeMinutes: 90,
+            inBedMinutes: 420
+        )
+
+        // Restless efficiency: 330 / 420 = 78.57%
+        let restlessEff = try XCTUnwrap(restlessSleep.efficiencyPercentage)
+        XCTAssertEqual(restlessEff, 78.57, accuracy: 0.1)
+
+        // Restless restorative: (30 + 40) / 330 = 21.21%
+        let restlessRest = try XCTUnwrap(restlessSleep.restorativePercentage)
+        XCTAssertEqual(restlessRest, 21.21, accuracy: 0.1)
+
+        // Restless debt: 330 - 480 = -150 minutes deficit
+        XCTAssertEqual(restlessSleep.sleepDebtMinutes, -150)
+
+        // Recovery score: 2 * 12 (24) + (78.57 * 0.25 = 19.6) + (21.21 * 0.5 = 10.6) = 54 (low readiness)
+        XCTAssertEqual(restlessSleep.recoveryScore, 54)
+
+        // Test HealthStore integration
+        let store = FakeHealthStore()
+        await store.setMockSleepEntry(sleep)
+        let retrieved = try await store.readSleepAnalysis(for: sampleDate, calendar: calendar)
+        XCTAssertNotNil(retrieved)
+        XCTAssertEqual(retrieved?.deepSleepMinutes, 90)
+        XCTAssertEqual(retrieved?.recoveryScore, 100)
+    }
+
+    // MARK: - Scenario 7: Athletic Supplements & Zero-Mock Gemini BYOK Router Pipeline
+
+    /// Scenario 7:
+    /// - Log athletic supplements: Creatine (5g), Whey Protein (30g), Multivitamins, Electrolytes.
+    /// - Verify calorie and macro behavior: Creatine/Multivitamins/Electrolytes = 0 kcal, Whey = 120 kcal (25g P, 2g C, 1g F).
+    /// - Verify LLMRouter hierarchy: Gemini provider has top priority, mock is completely absent in production.
+    func testScenario7_AthleticSupplementsAndGeminiZeroMock() async throws {
+        let referenceDate = calendar.date(from: DateComponents(year: 2026, month: 11, day: 2, hour: 9, minute: 0))!
+
+        // 1. Athletic supplements logging
+        let creatine = LogEntry(
+            eventKey: "manual_creatine",
+            itemId: "manual_creatine",
+            status: .done,
+            timestamp: referenceDate,
+            kcal: 0,
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+            source: .manual,
+            note: "Κρεατίνη (5g)"
+        )
+
+        let whey = LogEntry(
+            eventKey: "manual_whey",
+            itemId: "manual_whey",
+            status: .done,
+            timestamp: referenceDate,
+            kcal: 120,
+            protein: 25,
+            carbs: 2,
+            fat: 1,
+            source: .manual,
+            note: "Πρωτεΐνη Whey (30g)"
+        )
+
+        let electrolytes = LogEntry(
+            eventKey: "manual_electrolytes",
+            itemId: "manual_electrolytes",
+            status: .done,
+            timestamp: referenceDate,
+            kcal: 0,
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+            source: .manual,
+            note: "Ηλεκτρολύτες"
+        )
+
+        let suppEntries = [creatine, whey, electrolytes]
+        let totalKcal = CalorieEngine.consumedKcal(entries: suppEntries)
+        let macros = CalorieEngine.consumedMacros(entries: suppEntries)
+
+        XCTAssertEqual(totalKcal, 120.0)
+        XCTAssertEqual(macros.protein, 25.0)
+        XCTAssertEqual(macros.carbs, 2.0)
+        XCTAssertEqual(macros.fat, 1.0)
+
+        // 2. Verify Zero-Mock production LLMRouter contract
+        let productionRouter = LLMRouter()
+        // In production, mock provider is nil by default
+        let defaultActive = await productionRouter.activeProvider()
+        // If no Gemini key or on-device model is available, activeProvider returns nil (strictly no fake fallback)
+        if defaultActive != nil {
+            XCTAssertNotEqual(defaultActive?.id, "mock", "Production router must NEVER fall back to mock provider")
+        }
+
+        // Test Gemini provider presence in priority hierarchy
+        let keychain = KeychainStore(inMemory: true)
+        keychain.saveAPIKey("TEST_GEMINI_API_KEY_12345")
+        let geminiProvider = GeminiLLMProvider(apiKey: "TEST_GEMINI_API_KEY_12345")
+        let geminiAvailable = await geminiProvider.isAvailable()
+        XCTAssertTrue(geminiAvailable)
+        XCTAssertEqual(geminiProvider.id, "gemini")
+
+        let customRouter = LLMRouter(gemini: geminiProvider)
+        let active = await customRouter.activeProvider()
+        XCTAssertEqual(active?.id, "gemini")
+    }
 }
