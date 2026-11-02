@@ -122,16 +122,29 @@ public struct TodayView: View {
 
             // Dedicated Active Day Confirmation Banner
             if let activeChip = templateChips.first(where: { $0.id == container.selectedTemplateKey }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(OrchardColors.leafGreen)
-                        .font(.system(size: 12))
-                    Text("Ενεργό: Ακολουθείς **όλο το πρόγραμμα** της **\(activeChip.label)** (\(activeChip.summary)).")
-                        .font(.system(size: 11, design: .rounded))
-                        .foregroundStyle(.secondary)
-                    Spacer()
+                let usage = container.usageCountInLast14Days(templateKey: activeChip.id)
+                let remaining = max(0, 2 - usage)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(OrchardColors.leafGreen)
+                            .font(.system(size: 13))
+                        Text("Ενεργό: Ακολουθείς **όλο το πρόγραμμα** της **\(activeChip.label)** (\(activeChip.summary)).")
+                            .font(.system(size: 11, design: .rounded))
+                            .foregroundStyle(OrchardColors.text)
+                        Spacer()
+                    }
+                    if activeChip.id != "rest" {
+                        Text(remaining == 1 ? "ℹ️ Μπορείς να την επιλέξεις ακόμη 1 φορά στις επόμενες 14 ημέρες." : (remaining == 0 ? "⚠️ Συμπληρώθηκαν και οι 2 φορές των 14 ημερών για αυτή τη μέρα." : "ℹ️ Απομένουν 2 επιλογές στις επόμενες 14 ημέρες."))
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .padding(.leading, 21)
+                    }
                 }
-                .padding(.horizontal, 6)
+                .padding(8)
+                .background(OrchardColors.leafGreen.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .padding(.horizontal, 2)
                 .padding(.top, 2)
             }
         }
