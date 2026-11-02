@@ -12,6 +12,10 @@ let package = Package(
         .library(
             name: "OrchardDomain",
             targets: ["OrchardDomain"]
+        ),
+        .library(
+            name: "OrchardServices",
+            targets: ["OrchardServices"]
         )
     ],
     targets: [
@@ -19,9 +23,14 @@ let package = Package(
             name: "OrchardDomain",
             path: "Domain"
         ),
+        .target(
+            name: "OrchardServices",
+            dependencies: ["OrchardDomain"],
+            path: "Services"
+        ),
         .testTarget(
             name: "OrchardTests",
-            dependencies: ["OrchardDomain"],
+            dependencies: ["OrchardDomain", "OrchardServices"],
             path: "Tests/OrchardTests"
         )
     ]
