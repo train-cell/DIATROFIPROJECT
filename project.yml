@@ -25,17 +25,41 @@ targets:
       - path: Widget
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.skyd3n.orchard
+      DEVELOPMENT_TEAM: BKSGR5Q3JL
       INFOPLIST_FILE: Resources/Info.plist
       CODE_SIGN_ENTITLEMENTS: Resources/Orchard.entitlements
       CODE_SIGN_STYLE: Automatic
+      SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
+      SUPPORTS_MACCATALYST: NO
       ASSETCATALOG_COMPILER_APPICON_NAME: ""
 
   OrchardTests:
     type: bundle.unit-test
     platform: iOS
+    deploymentTarget: "17.0"
     sources:
       - path: Tests
     dependencies:
       - target: Orchard
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.skyd3n.orchardTests
+      DEVELOPMENT_TEAM: BKSGR5Q3JL
+      SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
+
+schemes:
+  Orchard:
+    build:
+      targets:
+        Orchard: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - OrchardTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

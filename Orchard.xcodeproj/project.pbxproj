@@ -492,7 +492,11 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					2B7E2C1B4DBEACC4E41DDD40 = {
+						DevelopmentTeam = BKSGR5Q3JL;
 						ProvisioningStyle = Automatic;
+					};
+					55767068F1FB876AF1A88932 = {
+						DevelopmentTeam = BKSGR5Q3JL;
 					};
 				};
 			};
@@ -689,6 +693,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = BKSGR5Q3JL;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -696,6 +702,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyd3n.orchardTests;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Orchard.app/Orchard";
 			};
@@ -708,6 +715,7 @@
 				CODE_SIGN_ENTITLEMENTS = Resources/Orchard.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BKSGR5Q3JL;
 				INFOPLIST_FILE = Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -716,6 +724,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyd3n.orchard;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -727,6 +737,7 @@
 				CODE_SIGN_ENTITLEMENTS = Resources/Orchard.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BKSGR5Q3JL;
 				INFOPLIST_FILE = Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -735,6 +746,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyd3n.orchard;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -743,6 +756,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEVELOPMENT_TEAM = BKSGR5Q3JL;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -750,6 +765,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyd3n.orchardTests;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Orchard.app/Orchard";
 			};
