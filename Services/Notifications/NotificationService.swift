@@ -1,6 +1,8 @@
 import Foundation
 #if canImport(OrchardDomain)
+#if canImport(OrchardDomain)
 import OrchardDomain
+#endif
 #endif
 
 #if canImport(UserNotifications)
