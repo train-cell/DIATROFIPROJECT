@@ -23,6 +23,7 @@ public final class AppContainer: ObservableObject {
     @Published public var plan: Plan
     @Published public var selectedTemplateKey: String
     @Published public var selectedDate: Date = Date()
+    @Published public var selectedTemplatesByDate: [String: String] = [:]
     @Published public var logEntries: [LogEntry] = []
     @Published public var biteCount: Int = 0
 
@@ -47,8 +48,14 @@ public final class AppContainer: ObservableObject {
         let loadedPlan = Self.loadDefaultPlan()
         self.plan = loadedPlan
 
-        // 2. Initial template key from weekday
-        let initialKey = loadedPlan.templateKey(for: Date()) ?? "day_1"
+        // 2. Initial template key from weekday or today's saved selection
+        let savedMap = UserDefaults.standard.dictionary(forKey: "orchard.selectedTemplatesByDate") as? [String: String] ?? [:]
+        self.selectedTemplatesByDate = savedMap
+        let todayFormatter = DateFormatter()
+        todayFormatter.dateFormat = "yyyy-MM-dd"
+        let todayKey = todayFormatter.string(from: Date())
+        let savedToday = savedMap[todayKey]
+        let initialKey = savedToday ?? (loadedPlan.templateKey(for: Date()) ?? "day_1")
         self.selectedTemplateKey = initialKey
 
         // 3. Resolve initial schedule & progress
@@ -78,7 +85,38 @@ public final class AppContainer: ObservableObject {
     // MARK: - Template Selection
     public func selectTemplate(key: String) {
         selectedTemplateKey = key
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateKey = formatter.string(from: selectedDate)
+        selectedTemplatesByDate[dateKey] = key
+        UserDefaults.standard.set(selectedTemplatesByDate, forKey: "orchard.selectedTemplatesByDate")
         refreshSchedule()
+    }
+
+    /// Calculates how many times a given day template was selected in the rolling 14-day window.
+    /// User rule: Each of the 7 days can be selected up to 2 times every 2 weeks (14 days).
+    public func usageCountInLast14Days(templateKey: String, referenceDate: Date = Date()) -> Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: referenceDate)
+        guard let fourteenDaysAgo = calendar.date(byAdding: .day, value: -14, to: today) else { return 0 }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        var count = 0
+        for (dateStr, key) in selectedTemplatesByDate {
+            guard key == templateKey else { continue }
+            if let date = formatter.date(from: dateStr), date >= fourteenDaysAgo && date <= today {
+                count += 1
+            }
+        }
+
+        let todayStr = formatter.string(from: today)
+        if selectedTemplateKey == templateKey && selectedTemplatesByDate[todayStr] == nil {
+            count += 1
+        }
+
+        return count
     }
 
     // MARK: - Logging Operations

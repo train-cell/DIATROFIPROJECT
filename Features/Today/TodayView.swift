@@ -7,16 +7,16 @@ import OrchardDomain
 public struct TodayView: View {
     @EnvironmentObject private var container: AppContainer
 
-    // List of day template chips required: Ημέρα 1 to 7 + Ξεκούραση
-    private let templateChips: [(id: String, label: String, dayName: String)] = [
-        ("day_1", "Ημέρα 1", "Δευτέρα"),
-        ("day_2", "Ημέρα 2", "Τρίτη"),
-        ("day_3", "Ημέρα 3", "Τετάρτη"),
-        ("day_4", "Ημέρα 4", "Πέμπτη"),
-        ("day_5", "Ημέρα 5", "Παρασκευή"),
-        ("day_6", "Ημέρα 6", "Σάββατο"),
-        ("day_7", "Ημέρα 7", "Κυριακή"),
-        ("rest", "Ξεκούραση", "Ανάπαυση")
+    // List of day template chips: Ημέρα 1 to 7 + Ανάπαυση
+    private let templateChips: [(id: String, label: String, summary: String)] = [
+        ("day_1", "Ημέρα 1", "Κοτόπουλο & Αραβική"),
+        ("day_2", "Ημέρα 2", "Φασολάκια & Κοτόπουλο"),
+        ("day_3", "Ημέρα 3", "Ταχίνι & Γιουβέτσι"),
+        ("day_4", "Ημέρα 4", "Φακές & Αυγά"),
+        ("day_5", "Ημέρα 5", "Μακαρόνια με Κιμά"),
+        ("day_6", "Ημέρα 6", "Ψάρι & Θαλασσινά"),
+        ("day_7", "Ημέρα 7", "Porridge & Μπριζόλα"),
+        ("rest", "Ανάπαυση", "Ημέρα Ξεκούρασης")
     ]
 
     public init() {}
@@ -62,10 +62,10 @@ public struct TodayView: View {
     private var templatePickerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("ΕΠΙΛΟΓΗ ΗΜΕΡΑΣ")
+                Text("ΕΠΙΛΟΓΗ ΗΜΕΡΑΣ (ΕΩΣ 2 ΦΟΡΕΣ / 14 ΗΜΕΡΕΣ)")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
-                    .tracking(1.0)
+                    .tracking(0.8)
                 Spacer()
             }
             .padding(.horizontal, 2)
@@ -74,18 +74,31 @@ public struct TodayView: View {
                 HStack(spacing: 8) {
                     ForEach(templateChips, id: \.id) { chip in
                         let isSelected = container.selectedTemplateKey == chip.id
+                        let usage = container.usageCountInLast14Days(templateKey: chip.id)
                         Button {
                             Haptics.selection()
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                                 container.selectTemplate(key: chip.id)
                             }
                         } label: {
-                            VStack(spacing: 2) {
-                                Text(chip.label)
-                                    .font(.system(size: 14, weight: isSelected ? .bold : .medium, design: .rounded))
-                                    .foregroundStyle(isSelected ? Color.white : OrchardColors.text)
+                            VStack(spacing: 3) {
+                                HStack(spacing: 4) {
+                                    Text(chip.label)
+                                        .font(.system(size: 14, weight: isSelected ? .bold : .medium, design: .rounded))
+                                        .foregroundStyle(isSelected ? Color.white : OrchardColors.text)
 
-                                Text(chip.dayName)
+                                    if chip.id != "rest" {
+                                        Text("\(usage)/2")
+                                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 1)
+                                            .background(isSelected ? Color.white.opacity(0.25) : (usage >= 2 ? Color.orange.opacity(0.18) : Color.secondary.opacity(0.15)))
+                                            .foregroundStyle(isSelected ? Color.white : (usage >= 2 ? Color.orange : .secondary))
+                                            .clipShape(Capsule())
+                                    }
+                                }
+
+                                Text(chip.summary)
                                     .font(.system(size: 10, weight: .regular, design: .rounded))
                                     .foregroundStyle(isSelected ? Color.white.opacity(0.85) : .secondary)
                             }
@@ -105,6 +118,21 @@ public struct TodayView: View {
                 }
                 .padding(.vertical, 2)
                 .padding(.horizontal, 2)
+            }
+
+            // Dedicated Active Day Confirmation Banner
+            if let activeChip = templateChips.first(where: { $0.id == container.selectedTemplateKey }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(OrchardColors.leafGreen)
+                        .font(.system(size: 12))
+                    Text("Ενεργό: Ακολουθείς **όλο το πρόγραμμα** της **\(activeChip.label)** (\(activeChip.summary)).")
+                        .font(.system(size: 11, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal, 6)
+                .padding(.top, 2)
             }
         }
         .padding(.top, 4)
