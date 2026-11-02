@@ -19,22 +19,30 @@ public struct TodayView: View {
         ("rest", "Ανάπαυση", "Ημέρα Ξεκούρασης")
     ]
 
+    @State private var showSleepSheet: Bool = false
+
     public init() {}
 
     public var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 22) {
+                VStack(spacing: 20) {
                     // 1. Morning Template Picker Chips
                     templatePickerSection
 
                     // 2. Hero Apple Progress View
                     heroAppleSection
 
-                    // 3. "Now / Next" Hero Card
+                    // 3. Hydration 4L Tracking Section
+                    hydrationSection
+
+                    // 4. AutoSleep / Bevel Recovery Quick Card
+                    sleepRecoveryCardSection
+
+                    // 5. "Now / Next" Hero Card
                     nowNextCardSection
 
-                    // 4. Interactive Timeline of Today's Meals
+                    // 6. Interactive Timeline of Today's Meals
                     timelineSection
                 }
                 .padding(.horizontal, 18)
@@ -43,11 +51,16 @@ public struct TodayView: View {
             .background(OrchardColors.background.ignoresSafeArea())
             .navigationTitle(String(localized: "tab_today"))
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showSleepSheet) {
+                SleepDetailView(sleepEntry: container.sleepEntries.first)
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Haptics.impact(.light)
-                        container.refreshSchedule()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                            container.refreshSchedule()
+                        }
                     } label: {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 14, weight: .bold))
@@ -192,7 +205,224 @@ public struct TodayView: View {
         .padding(.vertical, 8)
     }
 
-    // MARK: - 3. "Now / Next" Hero Card
+    // MARK: - 3. Hydration 4L Tracking Section
+    private var hydrationSection: some View {
+        let progress = min(1.0, container.waterIntakeMl / container.targetWaterMl)
+        let litersCurrent = container.waterIntakeMl / 1000.0
+        let percent = Int(progress * 100)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            // Header
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "drop.fill")
+                        .foregroundStyle(Color.cyan)
+                        .font(.system(size: 14))
+                    Text("ΕΝΥΔΑΤΩΣΗ (ΣΤΟΧΟΣ 4.0 L)")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .tracking(0.8)
+                }
+
+                Spacer()
+
+                Text("\(percent)%")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(Color.cyan.opacity(0.18))
+                    .foregroundStyle(Color.cyan)
+                    .clipShape(Capsule())
+            }
+
+            // Stats & Progress Bar
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(String(format: "%.2f", litersCurrent))
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+                    Text("/ 4.00 L")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    if container.waterIntakeMl >= container.targetWaterMl {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(OrchardColors.leafGreen)
+                            Text("Στόχος 4L επετεύχθη! 💧")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .foregroundStyle(OrchardColors.leafGreen)
+                        }
+                    } else {
+                        let remainingL = max(0.0, 4.0 - litersCurrent)
+                        Text("Απομένουν \(String(format: "%.2f", remainingL)) L")
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                // Smooth Animated Progress Bar
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.cyan.opacity(0.15))
+                            .frame(height: 12)
+
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.cyan, Color.blue],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: max(12, geo.size.width * CGFloat(progress)), height: 12)
+                            .animation(.spring(response: 0.45, dampingFraction: 0.75), value: container.waterIntakeMl)
+                    }
+                }
+                .frame(height: 12)
+            }
+
+            // Quick Add Buttons
+            HStack(spacing: 8) {
+                waterQuickButton(label: "+250 ml", ml: 250)
+                waterQuickButton(label: "+500 ml", ml: 500)
+                waterQuickButton(label: "+1.0 L", ml: 1000)
+                waterQuickButton(label: "Bolero 💧", ml: 500, isBolero: true)
+
+                if container.waterIntakeMl > 0 {
+                    Button {
+                        Haptics.impact(.light)
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                            container.resetWater()
+                        }
+                    } label: {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(8)
+                            .background(Color.secondary.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.top, 4)
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func waterQuickButton(label: String, ml: Double, isBolero: Bool = false) -> some View {
+        Button {
+            Haptics.impact(.medium)
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                container.addWater(ml: ml)
+            }
+        } label: {
+            HStack(spacing: 4) {
+                if isBolero {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 9))
+                }
+                Text(label)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(isBolero ? Color.orange.opacity(0.15) : Color.cyan.opacity(0.15))
+            .foregroundStyle(isBolero ? Color.orange : Color.cyan)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - 4. Sleep & Recovery Quick Card Section
+    private var sleepRecoveryCardSection: some View {
+        let sleep = container.sleepEntries.first ?? SleepEntry(
+            date: Date(),
+            rating: 4,
+            tags: ["Ξεκούραστος"],
+            asleepMinutes: 445,
+            deepSleepMinutes: 85,
+            remSleepMinutes: 105,
+            coreSleepMinutes: 255,
+            awakeMinutes: 30,
+            inBedMinutes: 475
+        )
+
+        let totalAsleep = sleep.asleepMinutes ?? 445
+        let asleepHours = totalAsleep / 60
+        let asleepRemainingMinutes = totalAsleep % 60
+        let restorativePct = Int(round(sleep.restorativePercentage ?? 42.0))
+
+        return Button {
+            Haptics.selection()
+            showSleepSheet = true
+        } label: {
+            HStack(spacing: 14) {
+                // Mini Score Ring
+                ZStack {
+                    Circle()
+                        .stroke(Color.indigo.opacity(0.2), lineWidth: 6)
+                        .frame(width: 54, height: 54)
+
+                    Circle()
+                        .trim(from: 0.0, to: CGFloat(sleep.recoveryScore) / 100.0)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.cyan, Color.indigo, Color.purple],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+                        .frame(width: 54, height: 54)
+
+                    Text("\(sleep.recoveryScore)%")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("ΑΠΟΚΑΤΑΣΤΑΣΗ & ΥΠΝΟΣ")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .tracking(0.8)
+
+                        Text("AutoSleep / Bevel")
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color.indigo.opacity(0.15))
+                            .foregroundStyle(Color.indigo)
+                            .clipShape(Capsule())
+                    }
+
+                    Text("\(asleepHours)ω \(asleepRemainingMinutes)λ • \(restorativePct)% Restorative (Deep+REM)")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+
+                    Text("Άνοιγμα πλήρους Hypnogram & Stage Analysis ➔")
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(Color.indigo)
+                }
+
+                Spacer()
+            }
+            .padding(14)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - 5. "Now / Next" Hero Card
     private var nowNextCardSection: some View {
         let mealEvents = container.resolvedEvents.filter { $0.item.type == .meal }
         let pendingEvents = mealEvents.filter { event in

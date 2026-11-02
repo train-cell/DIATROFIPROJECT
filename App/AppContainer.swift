@@ -27,6 +27,10 @@ public final class AppContainer: ObservableObject {
     @Published public var logEntries: [LogEntry] = []
     @Published public var biteCount: Int = 0
 
+    // MARK: - Water Hydration Tracking (4.0 Liters Target)
+    @Published public var waterIntakeMl: Double = 0.0
+    public let targetWaterMl: Double = 4000.0 // 4.0 Liters daily target
+
     @Published public var resolvedEvents: [ScheduledEvent] = []
     @Published public var appleProgress: AppleProgress = AppleProgress()
     @Published public var energyBalance: EnergyBalanceSummary?
@@ -58,10 +62,13 @@ public final class AppContainer: ObservableObject {
         let initialKey = savedToday ?? (loadedPlan.templateKey(for: Date()) ?? "day_1")
         self.selectedTemplateKey = initialKey
 
-        // 3. Resolve initial schedule & progress
+        // 3. Load today's hydration intake (4.0 Liters Target)
+        self.waterIntakeMl = UserDefaults.standard.double(forKey: "orchard.water.\(todayKey)")
+
+        // 4. Resolve initial schedule & progress
         self.refreshSchedule()
 
-        // 4. Background sync with HealthKit sleep
+        // 5. Background sync with HealthKit sleep
         Task { [weak self] in
             await self?.syncHealthKitSleep()
         }
@@ -117,6 +124,31 @@ public final class AppContainer: ObservableObject {
         }
 
         return count
+    }
+
+    // MARK: - Water Hydration Operations (4.0 Liters Target)
+    public func addWater(ml: Double) {
+        waterIntakeMl = max(0.0, waterIntakeMl + ml)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateKey = formatter.string(from: selectedDate)
+        UserDefaults.standard.set(waterIntakeMl, forKey: "orchard.water.\(dateKey)")
+
+        #if canImport(HealthKit)
+        if ml > 0, let quantityType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) {
+            let quantity = HKQuantity(unit: .literUnit(with: .milli), doubleValue: ml)
+            let sample = HKQuantitySample(type: quantityType, quantity: quantity, start: Date(), end: Date())
+            HKHealthStore().save(sample) { _, _ in }
+        }
+        #endif
+    }
+
+    public func resetWater() {
+        waterIntakeMl = 0.0
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateKey = formatter.string(from: selectedDate)
+        UserDefaults.standard.removeObject(forKey: "orchard.water.\(dateKey)")
     }
 
     // MARK: - Logging Operations

@@ -48,6 +48,7 @@
 		663190FD7C86F3EB8F8F548B /* ScheduleResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15EF9A54881C4D596620137F /* ScheduleResolver.swift */; };
 		69BE1B74F6024629927E9C19 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF82CD9CCFEEB9BC19E77930 /* Haptics.swift */; };
 		724CCE62A5A54B5CAE506E16 /* DayTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AC4ED3759318BEAF80F585D /* DayTemplate.swift */; };
+		75C57CC422FDC1DB09BF477A /* HydrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8C26538BE56D564BE147A7C /* HydrationTests.swift */; };
 		7F094796999CA08EE7596BFD /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8A20561ABC87F2CEAC0CA26 /* KeychainStore.swift */; };
 		8A37B5A22832872774E5F716 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D8246E1CF02C0806892A29 /* LogView.swift */; };
 		8B84BED35DBCC22574A0F2CD /* OrchardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04FCC7F7315F49C79A059E4C /* OrchardWidget.swift */; };
@@ -60,6 +61,7 @@
 		951EC73607ADC8E0A2797A29 /* LogMealIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0172B3AB2741C997565FF0DF /* LogMealIntent.swift */; };
 		9732E346F9BDF01EF1E1C520 /* CalorieEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9AE78F0E572250312A715D /* CalorieEngine.swift */; };
 		99E664936B16F3A429597B12 /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = FFA15810E59566AEA28383C4 /* AppIcon.png */; };
+		9D7BBD80A0D23F8B4EA91FAA /* HydrationDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C32E97895C52323E723331E /* HydrationDay.swift */; };
 		A1CA02B9F07831A6A9B6BD4A /* ColorTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C66352A9543BCAB049551DB /* ColorTokens.swift */; };
 		A5A310D729DDD959F26398E0 /* SleepDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8C16F4672BC5FB822E8E2F /* SleepDetailView.swift */; };
 		A66FE0454A35DB42C807C708 /* NotificationSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE0176EE5E4F616E28AD6106 /* NotificationSpec.swift */; };
@@ -116,6 +118,7 @@
 		4CFDA6F06A7CF8763C3F5038 /* PlanItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanItem.swift; sourceTree = "<group>"; };
 		505EAA093D3FA952D95062F1 /* WeeklyStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyStatsTests.swift; sourceTree = "<group>"; };
 		58ACA03B78BD218D9B2A3E1B /* plan.sample.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = plan.sample.json; sourceTree = "<group>"; };
+		5C32E97895C52323E723331E /* HydrationDay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HydrationDay.swift; sourceTree = "<group>"; };
 		60DA48F62778AE0868A3FDE8 /* NotificationCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCategory.swift; sourceTree = "<group>"; };
 		625D8B55F76555116104EF64 /* GeminiFallbackChainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiFallbackChainTests.swift; sourceTree = "<group>"; };
 		62DD04EA918AC89503FD714C /* CloudLLMProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudLLMProvider.swift; sourceTree = "<group>"; };
@@ -160,6 +163,7 @@
 		D0713F07777A4C698A2A32D4 /* plan.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = plan.json; sourceTree = "<group>"; };
 		D2A0969D14BAC8CECF94FA59 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
 		D45B8442A9B6F8A740B422EA /* ValidationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationResult.swift; sourceTree = "<group>"; };
+		D8C26538BE56D564BE147A7C /* HydrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HydrationTests.swift; sourceTree = "<group>"; };
 		DB8C16F4672BC5FB822E8E2F /* SleepDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepDetailView.swift; sourceTree = "<group>"; };
 		E3BDEE6F968FBD1D721F9525 /* AILogSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AILogSheet.swift; sourceTree = "<group>"; };
 		E4525DABFA6F023007F14A61 /* AppleOnDeviceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleOnDeviceProvider.swift; sourceTree = "<group>"; };
@@ -353,6 +357,7 @@
 			children = (
 				7338539536121DD0390285BF /* Anchor.swift */,
 				6AC4ED3759318BEAF80F585D /* DayTemplate.swift */,
+				5C32E97895C52323E723331E /* HydrationDay.swift */,
 				C6E1A404E26742514F6217AC /* LogEntry.swift */,
 				60DA48F62778AE0868A3FDE8 /* NotificationCategory.swift */,
 				AE0176EE5E4F616E28AD6106 /* NotificationSpec.swift */,
@@ -427,6 +432,7 @@
 				7826A519F49CABCD9ACAFF84 /* CatchupAdjustmentValidatorTests.swift */,
 				9013CA05082DE39D2CA43669 /* FoodEstimateValidatorTests.swift */,
 				625D8B55F76555116104EF64 /* GeminiFallbackChainTests.swift */,
+				D8C26538BE56D564BE147A7C /* HydrationTests.swift */,
 				B818E3DAD1F53B9620BE79F3 /* LiveSmokeTests.swift */,
 				21F2638030F33C482FD8F4AF /* LLMRouterTests.swift */,
 				2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */,
@@ -546,6 +552,7 @@
 				635A4047314CB7A010334AF8 /* CatchupAdjustmentValidatorTests.swift in Sources */,
 				AF8FDA51D16CAD3EA819E2AB /* FoodEstimateValidatorTests.swift in Sources */,
 				112AFD46913A73424B7CB98D /* GeminiFallbackChainTests.swift in Sources */,
+				75C57CC422FDC1DB09BF477A /* HydrationTests.swift in Sources */,
 				8CEF6D1C4ACA90A91933933E /* LLMRouterTests.swift in Sources */,
 				00A11A8D767B7CD25D5508C1 /* LiveSmokeTests.swift in Sources */,
 				2BB54B5E6958DB36F8EDC416 /* M0BootstrapTests.swift in Sources */,
@@ -581,6 +588,7 @@
 				01F5A45B241C342FFEC66AC0 /* GeminiLLMProvider.swift in Sources */,
 				69BE1B74F6024629927E9C19 /* Haptics.swift in Sources */,
 				045AF394AF3AFC51FA8DF327 /* HealthStore.swift in Sources */,
+				9D7BBD80A0D23F8B4EA91FAA /* HydrationDay.swift in Sources */,
 				454ED84BFE4ABC04123E3D5E /* InsightsView.swift in Sources */,
 				7F094796999CA08EE7596BFD /* KeychainStore.swift in Sources */,
 				DF1AEA7F92F2D72DEE0895F7 /* LLMProvider.swift in Sources */,

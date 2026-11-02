@@ -1,11 +1,11 @@
-# 🍏 The DIAτροφή Project
+# 🍏 DIATROFIPROJECT
 
 <p align="center">
-  <img src="Resources/AppIcon.png" alt="The DIAτροφή Project App Icon" width="160" height="160" style="border-radius: 36px; box-shadow: 0 12px 28px rgba(0,0,0,0.18);" />
+  <img src="Resources/AppIcon.png" alt="DIATROFIPROJECT App Icon" width="160" height="160" style="border-radius: 36px; box-shadow: 0 12px 28px rgba(0,0,0,0.18);" />
 </p>
 
 <p align="center">
-  <strong>Personal, Offline-First iOS Nutrition Rhythm, Athletic Supplementation, AutoSleep / Bevel Recovery & Energy Balance Assistant.</strong><br>
+  <strong>Personal, Offline-First iOS Nutrition Rhythm, Athletic Supplementation, 4.0L Hydration, AutoSleep / Bevel Recovery & Energy Balance Assistant.</strong><br>
   <em>Tied dynamically to your training sessions and biological rhythms.</em>
 </p>
 
@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Architecture-Clean_Domain_/_Offline--First-34C759?style=flat-square" alt="Clean Architecture" />
   <img src="https://img.shields.io/badge/AI_Engine-Gemini_BYOK_(12--Model_Fallback)-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini BYOK" />
   <img src="https://img.shields.io/badge/Wearable-Apple_Watch_Ultra_3_/_HealthKit-FF2D55?style=flat-square&logo=apple-watch&logoColor=white" alt="Apple Watch HealthKit" />
-  <img src="https://img.shields.io/badge/Tests-94_Passing_(0.039s)-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-99_Passing_(0.043s)-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="MIT License" />
 </p>
 
@@ -23,13 +23,14 @@
 
 ## 🎯 Executive Overview
 
-**The DIAτροφή Project** (code-named *Orchard*) is a production-grade, single-user, offline-first iOS application engineered for athletes who adhere to strict cyclical nutrition plans, heavy strength/athletic training schedules, and recovery protocols.
+**DIATROFIPROJECT** (also known as *The DIAτροφή Project* / code-named *Orchard*) is a production-grade, single-user, offline-first iOS application engineered for athletes who adhere to strict cyclical nutrition plans, heavy strength/athletic training schedules, and recovery protocols.
 
 Most nutrition tracking apps fail because they are **static databases** that force you into rigid hourly slots. If your 18:00 training session shifts to 19:30, your pre-workout meal and post-workout protein window get desynchronized. 
 
-The DIAτροφή Project solves this with a **deterministic schedule dispatcher**:
+DIATROFIPROJECT solves this with a **deterministic schedule dispatcher**:
 * **Lego-Block Anchors:** Meals, supplements, and snacks are anchored relative to training (`afterTraining: 45m`, `beforeTraining: 90m`) or waking rhythm (`wake + 30m`). If your workout shifts, the entire day adjusts seamlessly without human intervention.
 * **14-Day Cyclical Template Quotas:** A 7-day cyclical dietary rotation where every morning the user picks 1 of the 7 meal days, governed by a rolling 14-day quota window (each day can be selected up to 2 times every 2 weeks).
+* **4.0 Liters/Day Hydration Engine:** Dedicated water & electrolyte tracking targeting 4,000 ml daily with quick-add chips (+250ml, +500ml, +1.0L, +Bolero 0 kcal powder), animated gradient fill, and Apple HealthKit `dietaryWater` sync.
 * **AutoSleep & Bevel Recovery Parity:** Direct HealthKit integration reading deep, REM, core, and awake sleep stages from Apple Watch Ultra 3, rendering an interactive Hypnogram, Sleep Efficiency %, Restorative Sleep %, and a 0–100 Recovery Readiness Score.
 * **Multi-Model Gemini Fallback Chain (12 Models):** A self-healing Bring-Your-Own-Key (BYOK) AI engine spanning Google Gemini 3.x, 2.5, 2.0, and 1.5 generations (Flash, Flash-Lite, and Pro) that automatically cascades upon rate limits (HTTP 429) or server overload (HTTP 503).
 * **The Hero Apple Vector:** A visual end-of-day feedback mechanism where each meal confirmed takes a physical bite out of a vector apple shape.
@@ -133,6 +134,13 @@ One-tap rapid logging configured for serious athletic performance:
 * **Multivitamin & Omega-3** — 0 kcal
 * **Electrolytes & Magnesium** — 0 kcal
 * **Bolero Water Powder** — 0 kcal hydration flavoring chip
+
+### 💧 4.0 Liters/Day Hydration Engine (`HydrationDay`)
+Athletic performance and muscle fullness demand disciplined fluid balance:
+* **Strict 4,000 ml Target:** Designed specifically for high-intensity training regimens.
+* **Quick-Add Interactive Chips:** One-tap haptic buttons for `+250 ml` (glass), `+500 ml` (shaker), `+1.0 L` (bottle), and `Bolero 💧` (flavoring packet, 500ml 0 kcal).
+* **Smooth Spring Progress Bar:** Animated gradient fill displaying remaining milliliters and percent completion.
+* **HealthKit Integration:** Writes intake samples directly to `HKQuantityTypeIdentifier.dietaryWater`.
 
 ### 🛡️ 7-Day Free Provisioning Certificate Guard (`SigningGuard`)
 For developers deploying via personal Apple ID without a paid Developer Account ($99/year), iOS enforces a strict 7-day expiration policy on provisioning profiles.
