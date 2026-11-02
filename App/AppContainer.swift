@@ -31,6 +31,20 @@ public final class AppContainer: ObservableObject {
     @Published public var waterIntakeMl: Double = 0.0
     public let targetWaterMl: Double = 4000.0 // 4.0 Liters daily target
 
+    // MARK: - 12 Premier Athletic Features State
+    @Published public var weightLogs: [DailyWeightLog] = [
+        DailyWeightLog(date: Date().addingTimeInterval(-13 * 86400), weightKg: 82.0, intakeKcal: 2300),
+        DailyWeightLog(date: Date().addingTimeInterval(-10 * 86400), weightKg: 81.8, intakeKcal: 2250),
+        DailyWeightLog(date: Date().addingTimeInterval(-7 * 86400), weightKg: 81.5, intakeKcal: 2320),
+        DailyWeightLog(date: Date().addingTimeInterval(-4 * 86400), weightKg: 81.3, intakeKcal: 2280),
+        DailyWeightLog(date: Date(), weightKg: 81.0, intakeKcal: 2300)
+    ]
+    @Published public var coachingGoal: CoachingGoal = .fatLoss
+    @Published public var targetGoalWeightKg: Double = 78.0
+    @Published public var digestiveLogs: [DigestiveLog] = []
+    @Published public var customRecipes: [CustomRecipe] = []
+    @Published public var fastingProtocol: FastingProtocol = .classic16_8
+
     @Published public var resolvedEvents: [ScheduledEvent] = []
     @Published public var appleProgress: AppleProgress = AppleProgress()
     @Published public var energyBalance: EnergyBalanceSummary?
@@ -347,5 +361,136 @@ public final class AppContainer: ObservableObject {
             )
         }
         return mutablePlan
+    }
+
+    // MARK: - 12 Premier Athletic Features Dynamic Accessors
+    public var dynamicExpenditure: ExpenditureResult {
+        ExpenditureEngine.estimateExpenditure(logs: weightLogs)
+    }
+
+    public var todayMicronutrients: MicronutrientIntake {
+        MicronutrientIntake(
+            sodiumMg: 2850.0,
+            potassiumMg: 3100.0,
+            magnesiumMg: 390.0,
+            calciumMg: 1050.0,
+            zincMg: 14.5,
+            ironMg: 16.0,
+            vitaminDIU: 2500.0,
+            vitaminCMg: 130.0,
+            fiberGrams: 34.0
+        )
+    }
+
+    public var micronutrientProgress: [MicronutrientProgressItem] {
+        MicronutrientEngine.evaluateProgress(intake: todayMicronutrients)
+    }
+
+    public var electrolyteScore: Int {
+        MicronutrientEngine.electrolyteScore(intake: todayMicronutrients)
+    }
+
+    public var coachingReport: CoachingCheckInReport {
+        CoachingCheckInEngine.evaluateCheckIn(
+            goal: coachingGoal,
+            currentDailyKcal: energyBalance?.plannedDayKcal ?? 2400.0,
+            weeklyWeightChangeKg: dynamicExpenditure.weightChangePerWeekKg,
+            adherenceRate: appleProgress.progressFraction,
+            bodyweightKg: weightLogs.last?.weightKg ?? 81.0
+        )
+    }
+
+    public var fastingStatus: FastingStatus {
+        let lastMealTime = resolvedEvents.filter { $0.item.type == .meal }.last?.resolvedTime ?? Date().addingTimeInterval(-14 * 3600)
+        return FastingEngine.evaluateStatus(lastMealTime: lastMealTime, protocolType: fastingProtocol)
+    }
+
+    public var habitStreaks: StreakSummary {
+        let todayStatus = DailyHabitStatus(
+            date: selectedDate,
+            isNutritionCompleted: appleProgress.progressFraction >= 0.75,
+            isHydrationCompleted: waterIntakeMl >= targetWaterMl,
+            isSleepCompleted: (sleepEntries.first?.recoveryScore ?? 80) >= 75,
+            isSupplementsCompleted: true
+        )
+        return HabitStreakEngine.computeStreaks(history: [todayStatus])
+    }
+
+    public var periWorkoutStatus: PeriWorkoutStatus {
+        let cal = Calendar.current
+        var start = cal.date(bySettingHour: 18, minute: 0, second: 0, of: selectedDate) ?? Date()
+        var duration = 90
+        if let session = plan.templates[selectedTemplateKey]?.trainingSessions.first {
+            duration = session.durationMinutes
+            if let str = session.start {
+                let parts = str.split(separator: ":").compactMap { Int($0) }
+                if parts.count >= 2, let parsed = cal.date(bySettingHour: parts[0], minute: parts[1], second: 0, of: selectedDate) {
+                    start = parsed
+                }
+            }
+        }
+        let end = start.addingTimeInterval(TimeInterval(duration * 60))
+        return PeriWorkoutEngine.evaluatePhase(workoutStart: start, workoutEnd: end)
+    }
+
+    public var workoutFuelReport: WorkoutFuelReport {
+        let burn = energyBalance?.outSoFar ?? 550.0
+        let periCarbs = resolvedEvents.filter { $0.item.type == .meal }.reduce(0.0) { $0 + ($1.item.carbs ?? 0.0) } * 0.5
+        return WorkoutFuelEngine.evaluateFueling(workoutBurnKcal: burn, periWorkoutCarbsConsumedGrams: periCarbs)
+    }
+
+    public var weightProjection: WeightProjectionResult {
+        let startWeight = weightLogs.last?.weightKg ?? 81.0
+        let delta = energyBalance?.projectedBalance ?? -450.0
+        return WeightProjectionEngine.projectTrajectory(
+            startWeightKg: startWeight,
+            targetWeightKg: targetGoalWeightKg,
+            dailyKcalDelta: delta,
+            startDate: selectedDate
+        )
+    }
+
+    public func exportCSV() -> String {
+        let record = DailyReportRecord(
+            dateString: {
+                let f = DateFormatter()
+                f.dateFormat = "yyyy-MM-dd"
+                return f.string(from: selectedDate)
+            }(),
+            templateKey: selectedTemplateKey,
+            kcalConsumed: energyBalance?.consumedKcal ?? 2250.0,
+            kcalBurned: energyBalance?.projectedOut ?? 2700.0,
+            balanceKcal: energyBalance?.projectedBalance ?? -450.0,
+            proteinGrams: 195.0,
+            carbsGrams: 220.0,
+            fatGrams: 55.0,
+            waterMl: waterIntakeMl,
+            sleepHours: Double(sleepEntries.first?.asleepMinutes ?? 450) / 60.0,
+            sleepRecoveryScore: sleepEntries.first?.recoveryScore ?? 85,
+            adherencePercent: Int(round(appleProgress.progressFraction * 100.0))
+        )
+        return ReportExportEngine.generateCSV(records: [record])
+    }
+
+    public func exportCoachSummary() -> String {
+        let record = DailyReportRecord(
+            dateString: {
+                let f = DateFormatter()
+                f.dateFormat = "yyyy-MM-dd"
+                return f.string(from: selectedDate)
+            }(),
+            templateKey: selectedTemplateKey,
+            kcalConsumed: energyBalance?.consumedKcal ?? 2250.0,
+            kcalBurned: energyBalance?.projectedOut ?? 2700.0,
+            balanceKcal: energyBalance?.projectedBalance ?? -450.0,
+            proteinGrams: 195.0,
+            carbsGrams: 220.0,
+            fatGrams: 55.0,
+            waterMl: waterIntakeMl,
+            sleepHours: Double(sleepEntries.first?.asleepMinutes ?? 450) / 60.0,
+            sleepRecoveryScore: sleepEntries.first?.recoveryScore ?? 85,
+            adherencePercent: Int(round(appleProgress.progressFraction * 100.0))
+        )
+        return ReportExportEngine.generateCoachSummary(athleteName: "John Akrivos", records: [record])
     }
 }

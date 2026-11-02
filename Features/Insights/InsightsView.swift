@@ -159,6 +159,24 @@ public struct InsightsView: View {
 
                     // 4. Training vs Rest Sleep Insights
                     sleepComparisonCard
+
+                    // 5. Dynamic TDEE Expenditure Estimator (MacroFactor Parity)
+                    dynamicExpenditureSection
+
+                    // 6. Goal Weight Projection & Deficit Curve
+                    goalWeightProjectionSection
+
+                    // 7. Workout Strain vs Glycogen Fueling Score (Bevel Parity)
+                    workoutFuelingSection
+
+                    // 8. Micronutrients & Electrolyte RDA Progress (Cronometer Parity)
+                    micronutrientsSection
+
+                    // 9. Smart Weekly Coaching Check-In (RP Diet Parity)
+                    coachingCheckInSection
+
+                    // 10. Coach & Biometric RFC 4180 Exporter (Cronometer Pro Parity)
+                    coachReportExportSection
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
@@ -501,6 +519,255 @@ public struct InsightsView: View {
         .padding(16)
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    // MARK: - 5. Dynamic TDEE Expenditure Section (MacroFactor Parity)
+    private var dynamicExpenditureSection: some View {
+        let tdee = container.dynamicExpenditure
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("ΜΕΤΑΒΟΛΙΚΗ ΔΑΠΑΝΗ & TDEE")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.8)
+
+                Spacer()
+
+                Text("MacroFactor Algorithm")
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(Color.orange.opacity(0.15))
+                    .foregroundStyle(.orange)
+                    .clipShape(Capsule())
+            }
+
+            HStack(spacing: 14) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(Int(tdee.estimatedTdeeKcal)) kcal")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+                    Text("Ενεργό TDEE")
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(String(format: "%.1f kg", tdee.currentTrendWeightKg))
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundStyle(.purple)
+                    Text("Trend Weight (EMA)")
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(String(format: "%+.2f kg", tdee.weightChangePerWeekKg))
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(tdee.weightChangePerWeekKg < 0 ? .green : .red)
+                    Text("Ρυθμός / Εβδομάδα")
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    // MARK: - 6. Goal Weight Projection Section
+    private var goalWeightProjectionSection: some View {
+        let proj = container.weightProjection
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "el_GR")
+        f.dateFormat = "d MMMM yyyy"
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("ΠΡΟΒΟΛΗ ΣΤΟΧΟΥ ΒΑΡΟΥΣ")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.8)
+
+                Spacer()
+
+                Text("Στόχος: \(String(format: "%.1f", proj.targetWeightKg)) kg")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.green)
+            }
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(proj.totalDaysNeeded) Ημέρες")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+                    Text("Εκτιμώμενη Ολοκλήρωση: \(f.string(from: proj.targetCompletionDate))")
+                        .font(.system(size: 11, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    // MARK: - 7. Workout Glycogen Fueling Section (Bevel Parity)
+    private var workoutFuelingSection: some View {
+        let report = container.workoutFuelReport
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("ΑΝΕΦΟΔΙΑΣΜΟΣ ΓΛΥΚΟΓΟΝΟΥ ΠΡΟΠΟΝΗΣΗΣ")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.8)
+
+                Spacer()
+
+                Text("Score: \(report.fuelingScore)%")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.orange)
+            }
+
+            Text(report.status.titleGreek)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(OrchardColors.text)
+
+            Text(report.adviceGreek)
+                .font(.system(size: 11, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    // MARK: - 8. Micronutrients & Electrolyte Progress (Cronometer Parity)
+    private var micronutrientsSection: some View {
+        let items = container.micronutrientProgress
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("ΗΛΕΚΤΡΟΛΥΤΕΣ & ΜΙΚΡΟΘΡΕΠΤΙΚΑ (RDA)")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.8)
+
+                Spacer()
+
+                Text("Ηλεκτρολύτες: \(container.electrolyteScore)%")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.cyan.opacity(0.15))
+                    .foregroundStyle(.cyan)
+                    .clipShape(Capsule())
+            }
+
+            VStack(spacing: 8) {
+                ForEach(items) { item in
+                    VStack(spacing: 2) {
+                        HStack {
+                            Text(item.name)
+                                .font(.system(size: 11, design: .rounded))
+                                .foregroundStyle(OrchardColors.text)
+                            Spacer()
+                            Text("\(Int(item.current)) / \(Int(item.target)) \(item.unit)")
+                                .font(.system(size: 10, weight: .medium, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        GeometryReader { g in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(Color.secondary.opacity(0.15)).frame(height: 4)
+                                Capsule()
+                                    .fill(item.isElectrolyte ? Color.cyan : Color.green)
+                                    .frame(width: g.size.width * CGFloat(item.fraction), height: 4)
+                            }
+                        }
+                        .frame(height: 4)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    // MARK: - 9. Smart Coaching Check-In Section (RP Diet Parity)
+    private var coachingCheckInSection: some View {
+        let coach = container.coachingReport
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("SMART WEEKLY COACHING CHECK-IN")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.8)
+
+                Spacer()
+
+                Text(coach.goal.titleGreek)
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.purple.opacity(0.15))
+                    .foregroundStyle(.purple)
+                    .clipShape(Capsule())
+            }
+
+            Text(coach.rationale)
+                .font(.system(size: 11, design: .rounded))
+                .foregroundStyle(OrchardColors.text)
+
+            if coach.requiresAction {
+                HStack {
+                    Text("Πρόταση: \(Int(coach.recommendedCalories)) kcal (\(Int(coach.deltaCalories)) kcal)")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.orange)
+                    Spacer()
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    // MARK: - 10. Coach & Biometric RFC 4180 Exporter
+    private var coachReportExportSection: some View {
+        HStack(spacing: 12) {
+            ShareLink(item: container.exportCSV()) {
+                HStack(spacing: 6) {
+                    Image(systemName: "tablecells")
+                    Text("Εξαγωγή CSV")
+                }
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.blue.opacity(0.15))
+                .foregroundStyle(.blue)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+
+            ShareLink(item: container.exportCoachSummary()) {
+                HStack(spacing: 6) {
+                    Image(systemName: "doc.text")
+                    Text("Αναφορά Coach")
+                }
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.green.opacity(0.15))
+                .foregroundStyle(.green)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
     }
 
     private func legendItem(label: String, color: Color) -> some View {

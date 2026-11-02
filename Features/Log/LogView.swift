@@ -33,6 +33,9 @@ public struct LogView: View {
     @State private var selectedEventId: String? = nil
     @State private var showSuccessBanner: Bool = false
     @State private var showAISheet: Bool = false
+    @State private var showStaplesSheet: Bool = false
+    @State private var showRecipeSheet: Bool = false
+    @State private var showDigestiveSheet: Bool = false
 
     public init() {}
 
@@ -120,6 +123,57 @@ public struct LogView: View {
                     }
                     .buttonStyle(.plain)
 
+                    // 12-Features Quick Access: Staples / Barcode / Recipe / Digestion
+                    HStack(spacing: 8) {
+                        Button {
+                            Haptics.selection()
+                            showStaplesSheet = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "barcode.viewfinder")
+                                Text("Staples")
+                            }
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color.blue.opacity(0.12))
+                            .foregroundStyle(.blue)
+                            .clipShape(Capsule())
+                        }
+
+                        Button {
+                            Haptics.selection()
+                            showRecipeSheet = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "fork.knife.circle")
+                                Text("Proats/Συνταγή")
+                            }
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color.orange.opacity(0.12))
+                            .foregroundStyle(.orange)
+                            .clipShape(Capsule())
+                        }
+
+                        Button {
+                            Haptics.selection()
+                            showDigestiveSheet = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "heart.text.square")
+                                Text("Πέψη")
+                            }
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color.teal.opacity(0.12))
+                            .foregroundStyle(.teal)
+                            .clipShape(Capsule())
+                        }
+                    }
+
                     // 1. Category Selector
                     categorySelector
 
@@ -164,6 +218,30 @@ public struct LogView: View {
             }
             .sheet(isPresented: $showAISheet) {
                 AILogSheet()
+            }
+            .sheet(isPresented: $showStaplesSheet) {
+                StaplesLookupSheet { name, kcal, p, c, f in
+                    title = name
+                    kcalString = String(format: "%.0f", kcal)
+                    proteinString = String(format: "%.1f", p)
+                    carbsString = String(format: "%.1f", c)
+                    fatString = String(format: "%.1f", f)
+                }
+            }
+            .sheet(isPresented: $showRecipeSheet) {
+                RecipeBuilderSheet { recipe in
+                    title = recipe.titleGreek
+                    kcalString = String(format: "%.0f", recipe.perServingKcal)
+                    proteinString = String(format: "%.1f", recipe.perServingProtein)
+                    carbsString = String(format: "%.1f", recipe.perServingCarbs)
+                    fatString = String(format: "%.1f", recipe.perServingFats)
+                    container.customRecipes.append(recipe)
+                }
+            }
+            .sheet(isPresented: $showDigestiveSheet) {
+                DigestiveWellnessSheet { log in
+                    container.digestiveLogs.append(log)
+                }
             }
         }
     }

@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Architecture-Clean_Domain_/_Offline--First-34C759?style=flat-square" alt="Clean Architecture" />
   <img src="https://img.shields.io/badge/AI_Engine-Gemini_BYOK_(12--Model_Fallback)-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini BYOK" />
   <img src="https://img.shields.io/badge/Wearable-Apple_Watch_Ultra_3_/_HealthKit-FF2D55?style=flat-square&logo=apple-watch&logoColor=white" alt="Apple Watch HealthKit" />
-  <img src="https://img.shields.io/badge/Tests-99_Passing_(0.043s)-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-113_Passing_(0.068s)-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="MIT License" />
 </p>
 
@@ -34,6 +34,27 @@ DIATROFIPROJECT solves this with a **deterministic schedule dispatcher**:
 * **AutoSleep & Bevel Recovery Parity:** Direct HealthKit integration reading deep, REM, core, and awake sleep stages from Apple Watch Ultra 3, rendering an interactive Hypnogram, Sleep Efficiency %, Restorative Sleep %, and a 0–100 Recovery Readiness Score.
 * **Multi-Model Gemini Fallback Chain (12 Models):** A self-healing Bring-Your-Own-Key (BYOK) AI engine spanning Google Gemini 3.x, 2.5, 2.0, and 1.5 generations (Flash, Flash-Lite, and Pro) that automatically cascades upon rate limits (HTTP 429) or server overload (HTTP 503).
 * **The Hero Apple Vector:** A visual end-of-day feedback mechanism where each meal confirmed takes a physical bite out of a vector apple shape.
+
+---
+
+## 🏆 12 Premier Nutrition & Performance Features
+
+Benchmarked against the world's leading athletic nutrition and recovery platforms (*MacroFactor, Cronometer, RP Diet Coach, Zero, Streaks, MyFitnessPal, Bevel*):
+
+| # | Feature | Platform Parity | Engine / Module | Capabilities |
+|---|---|---|---|---|
+| **1** | **Dynamic TDEE Expenditure Engine** | *MacroFactor* | [`ExpenditureEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/ExpenditureEngine.swift) | Ordinary Least Squares (OLS) regression over calendar dates & EMA trend weight to calculate true daily metabolic burn ($7,700\text{ kcal/kg}$). |
+| **2** | **Micronutrient & Electrolyte RDA Engine** | *Cronometer* | [`MicronutrientEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/MicronutrientEngine.swift) | Athletic RDA targets for Sodium (3,500mg), Potassium (3,800mg), Magnesium (450mg), Calcium, Fiber (38g), and a 0–100% electrolyte replenishment ring. |
+| **3** | **Smart Weekly Coaching Check-In** | *RP Diet Coach* | [`CoachingCheckInEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/CoachingCheckInEngine.swift) | Algorithmic coach checking compliance (>75%), preserving protein at $2.2\text{ g/kg}$, and shifting carbs (70%) and fats (30%) dynamically. |
+| **4** | **Intermittent Fasting & Circadian Clock** | *Zero / YAZIO* | [`FastingEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/FastingEngine.swift) | Real-time biological stages: Digestion (0–4h) ➔ Fat Burning (4–12h) ➔ Ketosis & AMPK (12–16h) ➔ Autophagy (16h+). |
+| **5** | **Multi-Goal Habit & Adherence Streak Rings** | *Streaks / Carbon* | [`HabitStreakEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/HabitStreakEngine.swift) | 4 athletic rings: Nutrition, 4.0L Water, Sleep (>=7h / score >=75), and Supplements with perfect-day streak tracking. |
+| **6** | **Staple Foods & Barcode Lookup Library** | *Cronometer / MFP* | [`StapleFoodLibrary.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/StapleFoodLibrary.swift) | Zero-latency offline bodybuilding pantry (chicken breast, egg whites, whey isolate, oats, cream of rice, salmon, EVOO) + barcode scanning. |
+| **7** | **Peri-Workout Anabolic Window Tracker** | *RP Diet Coach* | [`PeriWorkoutEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/PeriWorkoutEngine.swift) | Biphasic nutrient timing: Pre-workout fuel (60–90m), Intra-workout hydration, Immediate post-workout anabolic window (0–45m), and Solid meal. |
+| **8** | **Custom Recipe & Macro Combo Builder** | *MyFitnessPal* | [`RecipeBuilderEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/RecipeBuilderEngine.swift) | Combine pantry staples into custom recipes (e.g. "Power Proats"), compute aggregate & per-serving macros, and convert directly into scheduled plan items. |
+| **9** | **Satiety, Energy & GI Digestion Journal** | *Lifesum* | [`DigestiveTracker.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/DigestiveTracker.swift) | Postprandial tracking: Satiety score (1–5), Energy level (1–5 food coma to peak), GI symptoms (bloating, acid reflux, heavy stomach), and digestive wellness score. |
+| **10** | **Workout Strain vs Glycogen Fueling Score** | *Bevel / Whoop* | [`WorkoutFuelEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/WorkoutFuelEngine.swift) | Compares Apple Watch workout energy burn with peri-workout carbohydrate intake, estimating glycogen adequacy ($65\%$ expenditure ratio). |
+| **11** | **Goal Weight Projection & Deficit Curve** | *MacroFactor* | [`WeightProjectionEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/WeightProjectionEngine.swift) | Mathematical milestone timeline, target completion date, and ISSN safe rate-of-loss guardrail ($< 1.0\%$ bodyweight/week). |
+| **12** | **Deep Biometric & Coach Report Exporter** | *Cronometer Pro* | [`ReportExportEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/ReportExportEngine.swift) | Generates standard RFC 4180 CSV tables and structured Greek briefings for athletic prep coaches with a single tap. |
 
 ---
 

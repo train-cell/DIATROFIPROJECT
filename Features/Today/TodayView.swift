@@ -30,6 +30,9 @@ public struct TodayView: View {
                     // 1. Morning Template Picker Chips
                     templatePickerSection
 
+                    // 1.5 Habit Streaks & 4-Rings Status
+                    habitStreakPillSection
+
                     // 2. Hero Apple Progress View
                     heroAppleSection
 
@@ -38,6 +41,9 @@ public struct TodayView: View {
 
                     // 4. AutoSleep / Bevel Recovery Quick Card
                     sleepRecoveryCardSection
+
+                    // 4.5 Fasting & Peri-Workout Nutrient Timing Section
+                    fastingAndPeriWorkoutSection
 
                     // 5. "Now / Next" Hero Card
                     nowNextCardSection
@@ -420,6 +426,140 @@ public struct TodayView: View {
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Habit Streaks & 4-Rings Pill
+    private var habitStreakPillSection: some View {
+        let streaks = container.habitStreaks
+        return HStack(spacing: 12) {
+            HStack(spacing: 6) {
+                Text("🔥")
+                    .font(.system(size: 14))
+                Text("\(streaks.currentStreakDays) ΗΜΕΡΕΣ STREAK")
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.orange)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.orange.opacity(0.12))
+            .clipShape(Capsule())
+
+            Spacer()
+
+            HStack(spacing: 8) {
+                habitDot(title: "Διατροφή", isDone: container.appleProgress.progressFraction >= 0.75, color: .green)
+                habitDot(title: "4L Νερό", isDone: container.waterIntakeMl >= container.targetWaterMl, color: .cyan)
+                habitDot(title: "Ύπνος", isDone: (container.sleepEntries.first?.recoveryScore ?? 85) >= 75, color: .indigo)
+                habitDot(title: "Supps", isDone: true, color: .purple)
+            }
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private func habitDot(title: String, isDone: Bool, color: Color) -> some View {
+        HStack(spacing: 3) {
+            Circle()
+                .fill(isDone ? color : Color.secondary.opacity(0.3))
+                .frame(width: 7, height: 7)
+            Text(title)
+                .font(.system(size: 9, weight: .semibold, design: .rounded))
+                .foregroundStyle(isDone ? color : .secondary)
+        }
+    }
+
+    // MARK: - Fasting & Peri-Workout Nutrient Timing Section
+    private var fastingAndPeriWorkoutSection: some View {
+        let fasting = container.fastingStatus
+        let peri = container.periWorkoutStatus
+
+        return VStack(spacing: 10) {
+            // 1. Intermittent Fasting Card
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Label(fasting.protocolType.titleGreek, systemImage: "clock.arrow.circlepath")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.purple)
+
+                    Spacer()
+
+                    Text(fasting.isFasting ? "Νηστεία" : "Παράθυρο Διατροφής")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(fasting.isFasting ? Color.purple.opacity(0.15) : Color.green.opacity(0.15))
+                        .foregroundStyle(fasting.isFasting ? Color.purple : Color.green)
+                        .clipShape(Capsule())
+                }
+
+                HStack {
+                    Text(fasting.stage.titleGreek)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+
+                    Spacer()
+
+                    let hrs = Int(fasting.remainingSeconds) / 3600
+                    let mins = (Int(fasting.remainingSeconds) % 3600) / 60
+                    Text(fasting.isGoalCompleted ? "Στόχος Ολοκληρώθηκε! 🎉" : "Απομένουν: \(hrs)ω \(mins)λ")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                // Progress Bar
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Color.purple.opacity(0.15))
+                            .frame(height: 4)
+                        Capsule()
+                            .fill(LinearGradient(colors: [Color.purple, Color.indigo], startPoint: .leading, endPoint: .trailing))
+                            .frame(width: geo.size.width * CGFloat(fasting.progressFraction), height: 4)
+                    }
+                }
+                .frame(height: 4)
+            }
+            .padding(12)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            // 2. Peri-Workout Timing Card
+            HStack(spacing: 10) {
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.orange)
+                    .frame(width: 32, height: 32)
+                    .background(Color.orange.opacity(0.12))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text(peri.phase.titleGreek)
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(OrchardColors.text)
+
+                        if peri.isAnabolicWindowActive {
+                            Text("Αναβολικό 0-45′ ⚡️")
+                                .font(.system(size: 8, weight: .bold, design: .rounded))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Color.red.opacity(0.15))
+                                .foregroundStyle(Color.red)
+                                .clipShape(Capsule())
+                        }
+                    }
+
+                    Text(peri.phase.nutrientFocusGreek)
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+            }
+            .padding(12)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
     }
 
     // MARK: - 5. "Now / Next" Hero Card
