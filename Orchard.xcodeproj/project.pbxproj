@@ -15,6 +15,7 @@
 		157D74AE7CDA3C54F4469A9C /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F394F34C75D97A7BEBEA0240 /* TelemetryService.swift */; };
 		1EFFDFE6BE5DCB2179EDA4BA /* LLMRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C85E06FCD9BF13B17EEE441 /* LLMRouter.swift */; };
 		1FD13A28A89BA6B5C3278362 /* FoodEstimateValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73CB50440CA2F05F00C4045 /* FoodEstimateValidator.swift */; };
+		21F84C0DFEE12702A904015D /* PlanImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D4BF2EE6545938231CDB99F /* PlanImportSheet.swift */; };
 		235D4E7CB342E2E2E2370F41 /* ValidationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = D45B8442A9B6F8A740B422EA /* ValidationResult.swift */; };
 		276A153140594C66513D33C6 /* WeeklyStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A6A5C4AF5F9B0AD1E0FE4D /* WeeklyStats.swift */; };
 		2BB54B5E6958DB36F8EDC416 /* M0BootstrapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */; };
@@ -63,6 +64,7 @@
 		AF8FDA51D16CAD3EA819E2AB /* FoodEstimateValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9013CA05082DE39D2CA43669 /* FoodEstimateValidatorTests.swift */; };
 		B51046977895260EA8C0C0C1 /* AppleProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 835714D38E45D97E9EDF3B38 /* AppleProgress.swift */; };
 		C46381AD253A73E0FA0CDD05 /* OrchardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07DFE0766F4DBB3FC800F2E4 /* OrchardApp.swift */; };
+		C77C5C7CD5483EA47DA9AA11 /* AILogSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BDEE6F968FBD1D721F9525 /* AILogSheet.swift */; };
 		CCB598E26C0D48A79D69997E /* NotificationCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DA48F62778AE0868A3FDE8 /* NotificationCategory.swift */; };
 		CCE5EC52F0859CF3E11E7907 /* TelemetryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57FA540A283777E63724179 /* TelemetryServiceTests.swift */; };
 		CEC061EB25F166E0550D40FD /* DomainPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D850188FDE81A57B3A8344 /* DomainPlaceholder.swift */; };
@@ -117,6 +119,7 @@
 		6AF611A4CA26D67D476BEE7E /* LLMProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMProvider.swift; sourceTree = "<group>"; };
 		6B9B59C01B040AFEE9D7428F /* AppleProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleProgressTests.swift; sourceTree = "<group>"; };
 		6D41E20BA9F2EBE20A33CA5F /* HealthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthStore.swift; sourceTree = "<group>"; };
+		6D4BF2EE6545938231CDB99F /* PlanImportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanImportSheet.swift; sourceTree = "<group>"; };
 		7338539536121DD0390285BF /* Anchor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Anchor.swift; sourceTree = "<group>"; };
 		757B8E4ECCF41EED0A404085 /* ScheduleResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleResolverTests.swift; sourceTree = "<group>"; };
 		7826A519F49CABCD9ACAFF84 /* CatchupAdjustmentValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatchupAdjustmentValidatorTests.swift; sourceTree = "<group>"; };
@@ -149,6 +152,7 @@
 		D0713F07777A4C698A2A32D4 /* plan.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = plan.json; sourceTree = "<group>"; };
 		D2A0969D14BAC8CECF94FA59 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
 		D45B8442A9B6F8A740B422EA /* ValidationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationResult.swift; sourceTree = "<group>"; };
+		E3BDEE6F968FBD1D721F9525 /* AILogSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AILogSheet.swift; sourceTree = "<group>"; };
 		E4525DABFA6F023007F14A61 /* AppleOnDeviceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleOnDeviceProvider.swift; sourceTree = "<group>"; };
 		E7DF00D61173E8EB690CE9EA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E8DCEBF02D84F941F3A1BB6D /* NotificationPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationPlanner.swift; sourceTree = "<group>"; };
@@ -226,6 +230,7 @@
 		3DD4083D4ACFB7B4DB336E03 /* Log */ = {
 			isa = PBXGroup;
 			children = (
+				E3BDEE6F968FBD1D721F9525 /* AILogSheet.swift */,
 				15D8246E1CF02C0806892A29 /* LogView.swift */,
 			);
 			path = Log;
@@ -373,6 +378,7 @@
 		B0A5609E34FD4D343C19760F /* Plan */ = {
 			isa = PBXGroup;
 			children = (
+				6D4BF2EE6545938231CDB99F /* PlanImportSheet.swift */,
 				B237F2F944DBFD6CEB75D33A /* PlanView.swift */,
 			);
 			path = Plan;
@@ -537,6 +543,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C77C5C7CD5483EA47DA9AA11 /* AILogSheet.swift in Sources */,
 				4720B7505F8A07E4CC184195 /* Anchor.swift in Sources */,
 				D6420D7DC44FCE73A3C05198 /* AppContainer.swift in Sources */,
 				5BCB6CEF1167D61126A57B16 /* AppleOnDeviceProvider.swift in Sources */,
@@ -568,6 +575,7 @@
 				8B84BED35DBCC22574A0F2CD /* OrchardWidget.swift in Sources */,
 				92FA3BC6E59EBF81401305A2 /* Plan.swift in Sources */,
 				E36FF05687CB27C959FD136E /* PlanDraftValidator.swift in Sources */,
+				21F84C0DFEE12702A904015D /* PlanImportSheet.swift in Sources */,
 				FA208A5F92593959730099D0 /* PlanItem.swift in Sources */,
 				921543FE8EA4511045CB0BB1 /* PlanLoader.swift in Sources */,
 				53950293CE12B9518A65CD43 /* PlanView.swift in Sources */,

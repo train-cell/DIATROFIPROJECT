@@ -32,6 +32,7 @@ public struct LogView: View {
     @State private var notes: String = ""
     @State private var selectedEventId: String? = nil
     @State private var showSuccessBanner: Bool = false
+    @State private var showAISheet: Bool = false
 
     public init() {}
 
@@ -66,6 +67,42 @@ public struct LogView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                     }
 
+                    // AI Quick Banner
+                    Button {
+                        Haptics.selection()
+                        showAISheet = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(OrchardColors.appleRed.opacity(0.15))
+                                    .frame(width: 38, height: 38)
+                                Image(systemName: "wand.and.stars")
+                                    .font(.system(size: 17, weight: .bold))
+                                    .foregroundStyle(OrchardColors.appleRed)
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Καταγραφή με AI 🪄")
+                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .foregroundStyle(OrchardColors.text)
+                                Text("Πληκτρολόγησε ελεύθερα για άμεση εκτίμηση")
+                                    .font(.system(size: 11, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(12)
+                        .background(OrchardColors.appleRed.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+
                     // 1. Category Selector
                     categorySelector
 
@@ -93,6 +130,24 @@ public struct LogView: View {
             .background(OrchardColors.background.ignoresSafeArea())
             .navigationTitle(String(localized: "tab_log"))
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        Haptics.selection()
+                        showAISheet = true
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "wand.and.stars")
+                            Text("AI")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                        }
+                        .foregroundStyle(OrchardColors.appleRed)
+                    }
+                }
+            }
+            .sheet(isPresented: $showAISheet) {
+                AILogSheet()
+            }
         }
     }
 
