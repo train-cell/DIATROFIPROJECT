@@ -265,12 +265,12 @@ final class PlanModelTests: XCTestCase {
         // Resolve Day 7
         let day7Events = ScheduleResolver.resolve(date: baseDate, plan: plan, selectedTemplateName: "day_7", calendar: calendar)
 
-        // 3a. Breakfast: Porridge at 10:00 (360 kcal)
+        // 3a. Breakfast: Porridge at 10:30 (360 kcal)
         let breakfast = try XCTUnwrap(day7Events.first { $0.itemId == "d7_breakfast" })
         XCTAssertTrue(breakfast.item.title.contains("Porridge"))
         XCTAssertEqual(breakfast.item.kcal, 360.0)
         XCTAssertEqual(calendar.component(.hour, from: breakfast.resolvedTime), 10)
-        XCTAssertEqual(calendar.component(.minute, from: breakfast.resolvedTime), 0)
+        XCTAssertEqual(calendar.component(.minute, from: breakfast.resolvedTime), 30)
 
         // 3b. Morning snack: Fruit at 12:00 (100 kcal)
         let snack = try XCTUnwrap(day7Events.first { $0.itemId == "d7_morning_snack" })
