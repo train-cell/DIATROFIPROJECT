@@ -303,16 +303,18 @@ final class CalorieEngineTests: XCTestCase {
         // Write first time
         let syncId1 = try await store.writeDietaryLog(entry, item: nil)
         XCTAssertEqual(syncId1, "orchard.\(entry.id.uuidString)")
-        XCTAssertEqual(store.savedSamples.count, 1)
-        XCTAssertEqual(store.savedSamples.first?.kcal, 650.0)
+        let samples1 = await store.savedSamples
+        XCTAssertEqual(samples1.count, 1)
+        XCTAssertEqual(samples1.first?.kcal, 650.0)
 
         // Write second time with updated calories (idempotency check)
         var updatedEntry = entry
         updatedEntry.kcal = 700.0
         let syncId2 = try await store.writeDietaryLog(updatedEntry, item: nil)
         XCTAssertEqual(syncId2, syncId1)
-        XCTAssertEqual(store.savedSamples.count, 1, "Must replace existing sample, not append a duplicate")
-        XCTAssertEqual(store.savedSamples.first?.kcal, 700.0)
+        let samples2 = await store.savedSamples
+        XCTAssertEqual(samples2.count, 1, "Must replace existing sample, not append a duplicate")
+        XCTAssertEqual(samples2.first?.kcal, 700.0)
     }
 
     func testFakeHealthStoreUndoFunctionality() async throws {
@@ -322,16 +324,19 @@ final class CalorieEngineTests: XCTestCase {
 
         try await store.writeDietaryLog(entry1, item: nil)
         try await store.writeDietaryLog(entry2, item: nil)
-        XCTAssertEqual(store.savedSamples.count, 2)
+        let initialSamples = await store.savedSamples
+        XCTAssertEqual(initialSamples.count, 2)
 
         // Undo entry1
         try await store.deleteDietaryLog(for: entry1.id)
-        XCTAssertEqual(store.savedSamples.count, 1)
-        XCTAssertEqual(store.savedSamples.first?.logEntryId, entry2.id)
+        let afterUndo1 = await store.savedSamples
+        XCTAssertEqual(afterUndo1.count, 1)
+        XCTAssertEqual(afterUndo1.first?.logEntryId, entry2.id)
 
         // Undo entry2
         try await store.deleteDietaryLog(syncIdentifier: "orchard.\(entry2.id.uuidString)")
-        XCTAssertEqual(store.savedSamples.count, 0)
+        let afterUndo2 = await store.savedSamples
+        XCTAssertEqual(afterUndo2.count, 0)
     }
 
     func testSkippedMealDoesNotSaveDietarySample() async throws {
@@ -339,12 +344,13 @@ final class CalorieEngineTests: XCTestCase {
         let entry = LogEntry(eventKey: "e1", itemId: "i1", status: .skipped, kcal: 500)
 
         try await store.writeDietaryLog(entry, item: nil)
-        XCTAssertEqual(store.savedSamples.count, 0, "Skipped meals must not save dietary samples")
+        let samples = await store.savedSamples
+        XCTAssertEqual(samples.count, 0, "Skipped meals must not save dietary samples")
     }
 
     func testFakeHealthStoreAuthorizationFailure() async {
         let store = FakeHealthStore()
-        store.shouldFailAuthorization = true
+        await store.setShouldFailAuthorization(true)
 
         do {
             _ = try await store.requestAuthorization()
@@ -357,7 +363,6 @@ final class CalorieEngineTests: XCTestCase {
     }
 
     func testFakeHealthStoreMockWorkoutsAndEnergyRead() async throws {
-        let store = FakeHealthStore()
         let now = Date()
         let session = TrainingSession(
             id: "workout_1",
@@ -369,8 +374,10 @@ final class CalorieEngineTests: XCTestCase {
             isActual: true,
             title: "Running"
         )
-        store.mockWorkouts = [session]
-        store.mockEnergyBurned = EnergyBurned(basalKcal: 1500, activeKcal: 600)
+        let store = FakeHealthStore(
+            mockWorkouts: [session],
+            mockEnergyBurned: EnergyBurned(basalKcal: 1500, activeKcal: 600)
+        )
 
         let workouts = try await store.readWorkouts(from: now.addingTimeInterval(-7200), to: now.addingTimeInterval(3600))
         XCTAssertEqual(workouts.count, 1)

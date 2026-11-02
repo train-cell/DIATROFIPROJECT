@@ -455,7 +455,7 @@ public final class HealthKitStore: HealthStoreProtocol, @unchecked Sendable {
             return
         }
 
-        let predicate = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier, value: syncIdentifier)
+        let predicate = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier, operatorType: .equalTo, value: syncIdentifier)
         let sampleTypes: [HKSampleType] = [
             HKQuantityType.quantityType(forIdentifier: .dietaryEnergyConsumed),
             HKQuantityType.quantityType(forIdentifier: .dietaryProtein),
