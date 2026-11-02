@@ -21,9 +21,9 @@ private final class GeminiMockURLProtocol: URLProtocol, @unchecked Sendable {
 
         Self.requestsReceived.append(url)
 
-        // Find matching handler by model substring in URL
+        // Find matching handler by model substring in URL (sorted by pattern length descending to avoid prefix collision)
         var handlerFound = false
-        for (pattern, handler) in Self.requestHandlers {
+        for (pattern, handler) in Self.requestHandlers.sorted(by: { $0.key.count > $1.key.count }) {
             if url.contains(pattern) {
                 let (response, data) = handler(request)
                 client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
