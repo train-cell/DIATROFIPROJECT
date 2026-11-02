@@ -41,7 +41,7 @@ public struct LogView: View {
         case .meal:
             return ["Πρωινό", "Μεσημεριανό", "Βραδινό", "Κοτόπουλο & Ρύζι", "Ομελέτα"]
         case .supplement:
-            return ["Κρεατίνη (5g)", "Πρωτεΐνη Whey (30g)", "Πολυβιταμίνη", "Ωμέγα 3", "Ηλεκτρολύτες", "Μαγνήσιο", "Βιταμίνη D3"]
+            return ["Κρεατίνη (5g)", "Πρωτεΐνη Whey (30g)", "Πολυβιταμίνη", "Ωμέγα 3", "Ηλεκτρολύτες", "Μαγνήσιο", "Βιταμίνη D3", "Σκόνη Νερού (Bolero)"]
         case .snack:
             return ["Μπανάνα", "Γιαούρτι 2% με μέλι", "Ξηροί καρποί (30g)", "Ρυζογκοφρέτες"]
         }
@@ -55,7 +55,7 @@ public struct LogView: View {
                 proteinString = "25"
                 carbsString = "2"
                 fatString = "1"
-            } else if item.contains("Κρεατίνη") || item.contains("Ωμέγα") || item.contains("Βιταμίνη") || item.contains("Ηλεκτρολύτες") || item.contains("Μαγνήσιο") || item.contains("Πολυβιταμίνη") {
+            } else if item.contains("Κρεατίνη") || item.contains("Ωμέγα") || item.contains("Βιταμίνη") || item.contains("Ηλεκτρολύτες") || item.contains("Μαγνήσιο") || item.contains("Πολυβιταμίνη") || item.contains("Bolero") || item.contains("Σκόνη") {
                 kcalString = "0"
                 proteinString = "0"
                 carbsString = "0"
