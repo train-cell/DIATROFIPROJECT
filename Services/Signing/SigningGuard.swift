@@ -114,6 +114,18 @@ public struct SigningGuard: Sendable {
                     itemId: "signing_alert"
                 )
             )
+        } else if expirationDate > now {
+            alerts.append(
+                NotificationSpec(
+                    identifier: Self.alert2hIdentifier,
+                    fireDate: now,
+                    category: NotificationCategory.signingAlert.rawValue,
+                    title: "Orchard Signing Expiry Critical (2h)",
+                    body: "Your personal certificate expires in \(hoursRemaining) hours! Re-sign immediately from Xcode to avoid app shutdown.",
+                    isTimeSensitive: true,
+                    itemId: "signing_alert"
+                )
+            )
         }
 
         return alerts

@@ -22,6 +22,7 @@ targets:
       - path: Features
       - path: DesignSystem
       - path: Resources
+      - path: Widget
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.skyd3n.orchard
       INFOPLIST_FILE: Resources/Info.plist

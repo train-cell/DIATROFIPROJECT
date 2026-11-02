@@ -29,6 +29,8 @@ public final class AppContainer: ObservableObject {
     @Published public var resolvedEvents: [ScheduledEvent] = []
     @Published public var appleProgress: AppleProgress = AppleProgress()
     @Published public var energyBalance: EnergyBalanceSummary?
+    @Published public var sleepEntries: [SleepEntry] = []
+    @Published public var weeklyStats: WeeklyStats?
 
     public init(healthStore: (any HealthStoreProtocol)? = nil) {
         #if canImport(HealthKit)
@@ -182,6 +184,15 @@ public final class AppContainer: ObservableObject {
             events: resolvedEvents,
             dailyBasalEstimate: 1600.0,
             fallbackHistoricalBurn: 2200.0
+        )
+
+        weeklyStats = WeeklyStatsCalculator.calculate(
+            events: resolvedEvents,
+            logs: logEntries,
+            sleepEntries: sleepEntries,
+            trainingDays: [],
+            dailyBalances: [energyBalance?.balanceNow ?? 0.0],
+            now: Date()
         )
     }
 

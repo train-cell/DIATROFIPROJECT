@@ -13,8 +13,8 @@ import OrchardServices
 /// Interactive App Intent allowing one-tap meal logging directly from the Orchard widget.
 @available(iOS 17.0, macOS 14.0, *)
 public struct LogMealIntent: AppIntent {
-    public static var title: LocalizedStringResource = "Έφαγα ✅"
-    public static var description = IntentDescription("Επιβεβαίωση γεύματος από το Widget")
+    public static let title: LocalizedStringResource = "Έφαγα ✅"
+    public static let description = IntentDescription("Επιβεβαίωση γεύματος από το Widget")
 
     @Parameter(title: "Meal ID")
     public var mealId: String
