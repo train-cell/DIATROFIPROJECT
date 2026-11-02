@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Orchard</string>
+	<string>The DIAτροφή Project</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,15 +15,15 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.0</string>
+	<string>1.0.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Orchard reads workout, energy burned, and sleep data to sync your meal timing and energy balance.</string>
+	<string>The DIAτροφή Project reads workout, energy burned, and sleep data to sync your meal timing and energy balance.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Orchard logs dietary calories and macronutrients confirmed by you to Apple Health.</string>
+	<string>The DIAτροφή Project logs dietary calories and macronutrients confirmed by you to Apple Health.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

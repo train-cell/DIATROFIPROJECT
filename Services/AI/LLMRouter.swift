@@ -12,7 +12,7 @@ public final class LLMRouter: @unchecked Sendable {
     public init(
         appleOnDevice: (any LLMProvider)? = AppleOnDeviceProvider(),
         cloud: (any LLMProvider)? = CloudLLMProvider(),
-        mock: (any LLMProvider)? = MockLLMProvider(),
+        mock: (any LLMProvider)? = nil,
         isEnabled: Bool? = nil
     ) {
         self.appleOnDevice = appleOnDevice

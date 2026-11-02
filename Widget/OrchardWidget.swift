@@ -79,7 +79,7 @@ struct SmallHomeWidgetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("🍏 Orchard")
+                Text("🍏 The DIAτροφή Project")
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundStyle(.green)
@@ -139,7 +139,7 @@ struct LockScreenRectangularView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("🍏 Orchard: \(Int(snapshot.progressFraction * 100))%")
+            Text("🍏 The DIAτροφή Project: \(Int(snapshot.progressFraction * 100))%")
                 .font(.headline)
             if let title = snapshot.nextMealTitle {
                 Text("Επόμενο: \(title)")
@@ -159,7 +159,7 @@ public struct OrchardWidget: Widget {
         StaticConfiguration(kind: kind, provider: OrchardWidgetProvider()) { entry in
             OrchardWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Orchard Apple Progress")
+        .configurationDisplayName("The DIAτροφή Project")
         .description("Παρακολούθησε την πρόοδο της ημέρας και κατάγραψε γεύματα με 1 tap.")
         .supportedFamilies([.systemSmall, .accessoryCircular, .accessoryRectangular])
     }
