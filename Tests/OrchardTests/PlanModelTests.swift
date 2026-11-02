@@ -176,4 +176,27 @@ final class PlanModelTests: XCTestCase {
         let invalidData = "invalid json".data(using: .utf8)!
         XCTAssertThrowsError(try PlanLoader.loadPlan(from: invalidData))
     }
+
+    func testRealPlanJsonIfPresent() throws {
+        let testFileUrl = URL(fileURLWithPath: #filePath)
+        let rootDir = testFileUrl.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let realPlanUrl = rootDir.appendingPathComponent("plan.json")
+        guard FileManager.default.fileExists(atPath: realPlanUrl.path) else { return }
+
+        let plan = try PlanLoader.loadPlan(from: realPlanUrl)
+        XCTAssertEqual(plan.templates.count, 7, "User 7-day cyclical plan must contain exactly 7 templates")
+        XCTAssertNotNil(plan.templates["day_1"])
+        XCTAssertNotNil(plan.templates["day_7"])
+
+        let calendar = Calendar(identifier: .gregorian)
+        let now = Date()
+
+        // Verify schedule resolution for all 7 days
+        for dayIndex in 1...7 {
+            let templateName = "day_\(dayIndex)"
+            let events = ScheduleResolver.resolve(date: now, plan: plan, selectedTemplateName: templateName, calendar: calendar)
+            XCTAssertFalse(events.isEmpty, "Template \(templateName) must produce events")
+            XCTAssertTrue(events.count >= 5, "Template \(templateName) should have at least 5 meals/slots")
+        }
+    }
 }
