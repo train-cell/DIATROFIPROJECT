@@ -46,6 +46,7 @@ public struct DailySleepItem: Identifiable {
 public struct InsightsView: View {
     @EnvironmentObject private var container: AppContainer
     @State private var showOrchardSheet: Bool = false
+    @State private var showSleepDetailSheet: Bool = false
 
     public init() {}
 
@@ -167,6 +168,9 @@ public struct InsightsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showOrchardSheet) {
                 OrchardView()
+            }
+            .sheet(isPresented: $showSleepDetailSheet) {
+                SleepDetailView(sleepEntry: container.sleepEntries.first)
             }
         }
     }
@@ -365,15 +369,36 @@ public struct InsightsView: View {
     // MARK: - 3. Sleep Duration vs Sleep Rating Chart
     private var sleepCorrelationChartSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("ΔΙΑΡΚΕΙΑ & ΠΟΙΟΤΗΤΑ ΥΠΝΟΥ")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .tracking(1.0)
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("ΔΙΑΡΚΕΙΑ & ΠΟΙΟΤΗΤΑ ΥΠΝΟΥ")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .tracking(1.0)
 
-                Text("Συσχέτιση Ωρών & Βαθμολογίας (1-5)")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundStyle(OrchardColors.text)
+                    Text("Συσχέτιση Ωρών & Βαθμολογίας (1-5)")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+                }
+
+                Spacer()
+
+                Button {
+                    Haptics.selection()
+                    showSleepDetailSheet = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "moon.stars.fill")
+                        Text("AutoSleep / Bevel")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.indigo.opacity(0.15))
+                    .foregroundStyle(Color.indigo)
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
 
             // Legend

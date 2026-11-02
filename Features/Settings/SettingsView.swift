@@ -432,22 +432,23 @@ public struct SettingsView: View {
 
             if aiEnabled {
                 Picker("Πάροχος AI", selection: $selectedAIProvider) {
+                    Text("Google Gemini (Bring Your Own Key)").tag("gemini")
                     Text("On-Device (Apple Intelligence)").tag("on_device")
                     Text("Cloud (OpenAI / Anthropic)").tag("cloud")
-                    Text("Offline / Mock").tag("offline")
                 }
 
-                if selectedAIProvider == "cloud" {
+                if selectedAIProvider == "gemini" || selectedAIProvider == "cloud" {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("API Key:")
+                        Text(selectedAIProvider == "gemini" ? "Gemini API Key (AIzaSy...):" : "Cloud API Key (sk-...):")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(.secondary)
 
-                        SecureField("sk-...", text: $apiKey)
+                        SecureField(selectedAIProvider == "gemini" ? "AIzaSy..." : "sk-...", text: $apiKey)
                             .font(.system(size: 14, design: .monospaced))
                             .textFieldStyle(.roundedBorder)
 
                         Button {
+                            KeychainStore.shared.saveAPIKey(apiKey)
                             Haptics.success()
                             showApiKeySavedToast = true
                             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -474,7 +475,7 @@ public struct SettingsView: View {
 
     // MARK: - 5. About Section
     private var aboutSection: some View {
-        Section(header: Text("ΣΧΕΤΙΚΑ ΜΕ ΤΟ ORCHARD")) {
+        Section(header: Text("ΣΧΕΤΙΚΑ ΜΕ ΤΟ THE DIAΤΡΟΦΗ PROJECT")) {
             HStack {
                 Text("Έκδοση")
                 Spacer()

@@ -1,5 +1,8 @@
 import XCTest
 @testable import OrchardDomain
+#if canImport(OrchardServices)
+@testable import OrchardServices
+#endif
 
 final class WeeklyStatsTests: XCTestCase {
 
@@ -128,4 +131,55 @@ final class WeeklyStatsTests: XCTestCase {
         XCTAssertEqual(stats.totalPlannedSupplements, 0)
         XCTAssertEqual(stats.supplementAdherencePercentage, 100.0)
     }
+
+    func testSleepEntryMetricsAndRecoveryScore() {
+        let sleep = SleepEntry(
+            date: Date(),
+            rating: 5,
+            tags: ["Βαθύς Ύπνος", "Ξεκούραστος"],
+            asleepMinutes: 480,       // 8h 00m
+            deepSleepMinutes: 120,     // 2h 00m
+            remSleepMinutes: 120,      // 2h 00m
+            coreSleepMinutes: 240,     // 4h 00m
+            awakeMinutes: 20,          // 20m
+            inBedMinutes: 500          // 8h 20m
+        )
+
+        // Efficiency: 480 / 500 = 96%
+        XCTAssertEqual(sleep.efficiencyPercentage ?? 0, 96.0, accuracy: 0.1)
+
+        // Restorative: (120 + 120) / 480 = 50%
+        XCTAssertEqual(sleep.restorativePercentage ?? 0, 50.0, accuracy: 0.1)
+
+        // Debt relative to 480: 480 - 480 = 0
+        XCTAssertEqual(sleep.sleepDebtMinutes, 0)
+
+        // Recovery score: 5 * 12 + (96 * 0.25) + min(20, 50 * 0.5) = 60 + 24 + 20 = 104 -> clamped to 100
+        XCTAssertEqual(sleep.recoveryScore, 100)
+    }
+
+    #if canImport(OrchardServices)
+    func testFakeHealthStoreSleepQuery() async throws {
+        let store = FakeHealthStore()
+        let sampleDate = Date()
+        let sampleSleep = SleepEntry(
+            date: sampleDate,
+            rating: 4,
+            asleepMinutes: 450,
+            deepSleepMinutes: 90,
+            remSleepMinutes: 100,
+            coreSleepMinutes: 260,
+            awakeMinutes: 30,
+            inBedMinutes: 480
+        )
+
+        await store.setMockSleepEntry(sampleSleep)
+        let fetched = try await store.readSleepAnalysis(for: sampleDate)
+
+        XCTAssertNotNil(fetched)
+        XCTAssertEqual(fetched?.asleepMinutes, 450)
+        XCTAssertEqual(fetched?.deepSleepMinutes, 90)
+        XCTAssertEqual(fetched?.remSleepMinutes, 100)
+    }
+    #endif
 }

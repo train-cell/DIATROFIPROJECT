@@ -41,9 +41,26 @@ public struct LogView: View {
         case .meal:
             return ["Πρωινό", "Μεσημεριανό", "Βραδινό", "Κοτόπουλο & Ρύζι", "Ομελέτα"]
         case .supplement:
-            return ["Κρεατίνη 5g", "Ωμέγα 3", "Βιταμίνη D3", "Πρωτεΐνη Whey", "Ηλεκτρολύτες"]
+            return ["Κρεατίνη (5g)", "Πρωτεΐνη Whey (30g)", "Πολυβιταμίνη", "Ωμέγα 3", "Ηλεκτρολύτες", "Μαγνήσιο", "Βιταμίνη D3"]
         case .snack:
             return ["Μπανάνα", "Γιαούρτι 2% με μέλι", "Ξηροί καρποί (30g)", "Ρυζογκοφρέτες"]
+        }
+    }
+
+    private func selectSuggestion(_ item: String) {
+        title = item
+        if category == .supplement {
+            if item.contains("Πρωτεΐνη") || item.contains("Whey") {
+                kcalString = "120"
+                proteinString = "25"
+                carbsString = "2"
+                fatString = "1"
+            } else if item.contains("Κρεατίνη") || item.contains("Ωμέγα") || item.contains("Βιταμίνη") || item.contains("Ηλεκτρολύτες") || item.contains("Μαγνήσιο") || item.contains("Πολυβιταμίνη") {
+                kcalString = "0"
+                proteinString = "0"
+                carbsString = "0"
+                fatString = "0"
+            }
         }
     }
 
@@ -184,7 +201,7 @@ public struct LogView: View {
                     ForEach(suggestions, id: \.self) { item in
                         Button {
                             Haptics.selection()
-                            title = item
+                            selectSuggestion(item)
                         } label: {
                             Text(item)
                                 .font(.system(size: 12, weight: .medium, design: .rounded))

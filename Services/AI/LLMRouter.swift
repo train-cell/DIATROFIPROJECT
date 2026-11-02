@@ -4,17 +4,20 @@ import Foundation
 /// Follows priority: Apple On-Device -> Cloud Provider -> Deterministic Mock Fallback.
 public final class LLMRouter: @unchecked Sendable {
 
+    private let gemini: (any LLMProvider)?
     private let appleOnDevice: (any LLMProvider)?
     private let cloud: (any LLMProvider)?
     private let mock: (any LLMProvider)?
     private let isEnabledOverride: Bool?
 
     public init(
+        gemini: (any LLMProvider)? = GeminiLLMProvider(),
         appleOnDevice: (any LLMProvider)? = AppleOnDeviceProvider(),
         cloud: (any LLMProvider)? = CloudLLMProvider(),
         mock: (any LLMProvider)? = nil,
         isEnabled: Bool? = nil
     ) {
+        self.gemini = gemini
         self.appleOnDevice = appleOnDevice
         self.cloud = cloud
         self.mock = mock
@@ -36,6 +39,10 @@ public final class LLMRouter: @unchecked Sendable {
     /// Selects the highest-priority active provider.
     public func activeProvider() async -> (any LLMProvider)? {
         guard isEnabled else { return nil }
+
+        if let geminiProvider = gemini, await geminiProvider.isAvailable() {
+            return geminiProvider
+        }
 
         if let onDevice = appleOnDevice, await onDevice.isAvailable() {
             return onDevice

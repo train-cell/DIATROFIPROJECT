@@ -5,6 +5,7 @@ import Security
 
 /// Thread-safe storage for Cloud AI API keys in the device Keychain with in-memory test fallback.
 public final class KeychainStore: @unchecked Sendable {
+    public static let shared = KeychainStore()
 
     private let service = "com.skyd3n.orchard.ai"
     private let apiKeyAccount = "cloud_llm_api_key"

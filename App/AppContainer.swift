@@ -53,6 +53,26 @@ public final class AppContainer: ObservableObject {
 
         // 3. Resolve initial schedule & progress
         self.refreshSchedule()
+
+        // 4. Background sync with HealthKit sleep
+        Task { [weak self] in
+            await self?.syncHealthKitSleep()
+        }
+    }
+
+    public func syncHealthKitSleep() async {
+        do {
+            if let entry = try await healthStore.readSleepAnalysis(for: selectedDate) {
+                if let idx = sleepEntries.firstIndex(where: { Calendar.current.isDate($0.date, inSameDayAs: entry.date) }) {
+                    sleepEntries[idx] = entry
+                } else {
+                    sleepEntries.append(entry)
+                }
+                refreshSchedule()
+            }
+        } catch {
+            // Non-fatal, continue with local entries
+        }
     }
 
     // MARK: - Template Selection

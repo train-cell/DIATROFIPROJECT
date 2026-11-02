@@ -46,6 +46,9 @@ public protocol HealthStoreProtocol: Sendable {
     /// Reads basal and active energy burned for a single calendar day.
     func readEnergyBurned(for date: Date, calendar: Calendar) async throws -> EnergyBurned
 
+    /// Reads sleep stages & duration for the specified date (from preceding evening to wake time).
+    func readSleepAnalysis(for date: Date, calendar: Calendar) async throws -> SleepEntry?
+
     /// Writes a dietary LogEntry (calories and macros) to Apple Health.
     /// Uses idempotent metadata sync identifier: `HKMetadataKeySyncIdentifier = "orchard.<logEntryId>"`.
     /// Note: Orchard NEVER writes active energy burned to avoid double-counting Apple Watch data.
@@ -66,6 +69,10 @@ extension HealthStoreProtocol {
             return EnergyBurned()
         }
         return try await readEnergyBurned(from: startOfDay, to: endOfDay)
+    }
+
+    public func readSleepAnalysis(for date: Date) async throws -> SleepEntry? {
+        try await readSleepAnalysis(for: date, calendar: .current)
     }
 
     public func deleteDietaryLog(for entryId: UUID) async throws {
@@ -117,6 +124,7 @@ public actor FakeHealthStore: HealthStoreProtocol {
     public var mockWorkouts: [TrainingSession]
     public var mockEnergyBurned: EnergyBurned
     public var mockEnergyBurnedByDate: [Date: EnergyBurned]
+    public var mockSleepEntry: SleepEntry? = nil
 
     // Call tracking
     public private(set) var requestAuthorizationCalls: Int
@@ -159,6 +167,10 @@ public actor FakeHealthStore: HealthStoreProtocol {
         self.mockEnergyBurned = energy
     }
 
+    public func setMockSleepEntry(_ entry: SleepEntry?) {
+        self.mockSleepEntry = entry
+    }
+
     public func setSavedSamples(_ samples: [FakeDietarySample]) {
         self.savedSamples = samples
     }
@@ -193,6 +205,11 @@ public actor FakeHealthStore: HealthStoreProtocol {
             return EnergyBurned()
         }
         return try await readEnergyBurned(from: startOfDay, to: endOfDay)
+    }
+
+    public func readSleepAnalysis(for date: Date, calendar: Calendar = .current) async throws -> SleepEntry? {
+        guard isAuthorized else { throw HealthStoreError.notAuthorized }
+        return mockSleepEntry
     }
 
     @discardableResult
@@ -263,8 +280,9 @@ public final class HealthKitStore: HealthStoreProtocol, @unchecked Sendable {
               let carbsType = HKQuantityType.quantityType(forIdentifier: .dietaryCarbohydrates),
               let fatType = HKQuantityType.quantityType(forIdentifier: .dietaryFatTotal),
               let activeEnergyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned),
-              let basalEnergyType = HKQuantityType.quantityType(forIdentifier: .basalEnergyBurned) else {
-            throw HealthStoreError.underlying("Unable to create HealthKit quantity types.")
+              let basalEnergyType = HKQuantityType.quantityType(forIdentifier: .basalEnergyBurned),
+              let sleepType = HKCategoryType.categoryType(forIdentifier: .sleepAnalysis) else {
+            throw HealthStoreError.underlying("Unable to create HealthKit types.")
         }
 
         let workoutType = HKObjectType.workoutType()
@@ -278,11 +296,12 @@ public final class HealthKitStore: HealthStoreProtocol, @unchecked Sendable {
             fatType
         ]
 
-        // Read types: Workouts and burned energy.
+        // Read types: Workouts, burned energy, and sleep analysis.
         let typesToRead: Set<HKObjectType> = [
             workoutType,
             activeEnergyType,
-            basalEnergyType
+            basalEnergyType,
+            sleepType
         ]
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -353,6 +372,103 @@ public final class HealthKitStore: HealthStoreProtocol, @unchecked Sendable {
 
         let (activeKcal, basalKcal) = try await (active, basal)
         return EnergyBurned(basalKcal: basalKcal, activeKcal: activeKcal)
+    }
+
+    public func readSleepAnalysis(for date: Date, calendar: Calendar = .current) async throws -> SleepEntry? {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            return nil
+        }
+        guard let sleepType = HKCategoryType.categoryType(forIdentifier: .sleepAnalysis) else {
+            return nil
+        }
+
+        // Night window: from 18:00 (6 PM) yesterday to 14:00 (2 PM) on the target date
+        let startOfDay = calendar.startOfDay(for: date)
+        guard let windowStart = calendar.date(byAdding: .hour, value: -6, to: startOfDay),
+              let windowEnd = calendar.date(byAdding: .hour, value: 14, to: startOfDay) else {
+            return nil
+        }
+
+        let predicate = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: .strictStartDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: sleepType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let categorySamples = samples as? [HKCategorySample], !categorySamples.isEmpty else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                var deepSeconds: TimeInterval = 0
+                var remSeconds: TimeInterval = 0
+                var coreSeconds: TimeInterval = 0
+                var awakeSeconds: TimeInterval = 0
+                var inBedSeconds: TimeInterval = 0
+                var totalAsleepSeconds: TimeInterval = 0
+
+                for sample in categorySamples {
+                    let duration = sample.endDate.timeIntervalSince(sample.startDate)
+                    guard duration > 0 else { continue }
+
+                    switch sample.value {
+                    case HKCategoryValueSleepAnalysis.asleepDeep.rawValue:
+                        deepSeconds += duration
+                        totalAsleepSeconds += duration
+                    case HKCategoryValueSleepAnalysis.asleepREM.rawValue:
+                        remSeconds += duration
+                        totalAsleepSeconds += duration
+                    case HKCategoryValueSleepAnalysis.asleepCore.rawValue:
+                        coreSeconds += duration
+                        totalAsleepSeconds += duration
+                    case HKCategoryValueSleepAnalysis.awake.rawValue:
+                        awakeSeconds += duration
+                    case HKCategoryValueSleepAnalysis.inBed.rawValue:
+                        inBedSeconds += duration
+                    default:
+                        if sample.value == HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue {
+                            totalAsleepSeconds += duration
+                            coreSeconds += duration
+                        }
+                    }
+                }
+
+                if inBedSeconds == 0 {
+                    inBedSeconds = totalAsleepSeconds + awakeSeconds
+                }
+
+                let deepMin = Int(deepSeconds / 60.0)
+                let remMin = Int(remSeconds / 60.0)
+                let coreMin = Int(coreSeconds / 60.0)
+                let awakeMin = Int(awakeSeconds / 60.0)
+                let inBedMin = Int(inBedSeconds / 60.0)
+                let asleepMin = Int(totalAsleepSeconds / 60.0)
+
+                let entry = SleepEntry(
+                    date: date,
+                    rating: 4,
+                    tags: [],
+                    asleepMinutes: asleepMin,
+                    deepSleepMinutes: deepMin,
+                    remSleepMinutes: remMin,
+                    coreSleepMinutes: coreMin,
+                    awakeMinutes: awakeMin,
+                    inBedMinutes: inBedMin
+                )
+
+                continuation.resume(returning: entry)
+            }
+            healthStore.execute(query)
+        }
     }
 
     private func querySum(
