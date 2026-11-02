@@ -34,9 +34,11 @@ public struct SettingsView: View {
 
     // AI Assistant
     @AppStorage("orchard_ai_enabled") private var aiEnabled: Bool = true
-    @AppStorage("orchard_ai_provider") private var selectedAIProvider: String = "on_device"
+    @AppStorage("orchard_ai_provider") private var selectedAIProvider: String = "gemini"
     @AppStorage("orchard_ai_api_key") private var apiKey: String = ""
     @State private var showApiKeySavedToast: Bool = false
+    @State private var isTestingGeminiConnection: Bool = false
+    @State private var geminiTestResult: ConnectionTestResult? = nil
 
     public init() {}
 
@@ -447,23 +449,137 @@ public struct SettingsView: View {
                             .font(.system(size: 14, design: .monospaced))
                             .textFieldStyle(.roundedBorder)
 
-                        Button {
-                            KeychainStore.shared.saveAPIKey(apiKey)
-                            Haptics.success()
-                            showApiKeySavedToast = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                showApiKeySavedToast = false
+                        HStack(spacing: 12) {
+                            Button {
+                                KeychainStore.shared.saveAPIKey(apiKey)
+                                Haptics.success()
+                                showApiKeySavedToast = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    showApiKeySavedToast = false
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "lock.shield.fill")
+                                    Text(showApiKeySavedToast ? "Αποθηκεύτηκε! ✅" : "Αποθήκευση 🔒")
+                                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                                }
+                                .foregroundStyle(showApiKeySavedToast ? OrchardColors.leafGreen : OrchardColors.appleRed)
                             }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "lock.shield.fill")
-                                Text(showApiKeySavedToast ? "Αποθηκεύτηκε στο Keychain! ✅" : "Αποθήκευση στο Keychain 🔒")
-                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+
+                            if selectedAIProvider == "gemini" {
+                                Spacer()
+
+                                Button {
+                                    Haptics.selection()
+                                    isTestingGeminiConnection = true
+                                    geminiTestResult = nil
+                                    Task {
+                                        let provider = GeminiLLMProvider(apiKey: apiKey.isEmpty ? nil : apiKey)
+                                        let result = try? await provider.testConnection()
+                                        await MainActor.run {
+                                            isTestingGeminiConnection = false
+                                            geminiTestResult = result
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        if isTestingGeminiConnection {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                        } else {
+                                            Image(systemName: "bolt.fill")
+                                        }
+                                        Text("Δοκιμή Fallback")
+                                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                    }
+                                    .foregroundStyle(OrchardColors.appleRed)
+                                }
+                                .disabled(isTestingGeminiConnection)
                             }
-                            .foregroundStyle(showApiKeySavedToast ? OrchardColors.leafGreen : OrchardColors.appleRed)
+                        }
+
+                        // Connection Test Result Banner
+                        if let test = geminiTestResult {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: test.isSuccess ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                                        .foregroundStyle(test.isSuccess ? OrchardColors.leafGreen : Color.orange)
+                                    Text(test.isSuccess ? "Σύνδεση Επιτυχής!" : "Σφάλμα Σύνδεσης")
+                                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                                        .foregroundStyle(test.isSuccess ? OrchardColors.leafGreen : Color.orange)
+                                    Spacer()
+                                    if test.isSuccess {
+                                        Text("\(Int(test.latencyMs))ms")
+                                            .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Text(test.message)
+                                    .font(.system(size: 11, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(8)
+                            .background(test.isSuccess ? OrchardColors.leafGreen.opacity(0.1) : Color.orange.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .padding(.top, 4)
                         }
                     }
                     .padding(.vertical, 4)
+
+                    // Gemini Fallback Chain Visualization
+                    if selectedAIProvider == "gemini" {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text("ΑΛΥΣΙΔΑ FALLBACK (FREE TIER)")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                                    .tracking(0.6)
+                                Spacer()
+                                Text("6 Μοντέλα")
+                                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(OrchardColors.appleRed.opacity(0.12))
+                                    .foregroundStyle(OrchardColors.appleRed)
+                                    .clipShape(Capsule())
+                            }
+
+                            ForEach(Array(GeminiLLMProvider.availableModelMetadata.enumerated()), id: \.element.id) { index, model in
+                                HStack(alignment: .center, spacing: 6) {
+                                    Text("\(index + 1).")
+                                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        HStack(spacing: 4) {
+                                            Text(model.displayName)
+                                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                            Text("(\(model.rpmFree) RPM)")
+                                                .font(.system(size: 9, weight: .medium, design: .rounded))
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Text(model.descriptionGreek)
+                                            .font(.system(size: 9, design: .rounded))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    if index < GeminiLLMProvider.availableModelMetadata.count - 1 {
+                                        Image(systemName: "arrow.down")
+                                            .font(.system(size: 8, weight: .semibold))
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                }
+                                .padding(.vertical, 2)
+                            }
+
+                            Text("Σε περίπτωση rate limit (429) ή υπερφόρτωσης (503), γίνεται αυτόματη μετάβαση στο επόμενο δωρεάν μοντέλο.")
+                                .font(.system(size: 10, design: .rounded))
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 2)
+                        }
+                        .padding(10)
+                        .background(Color(uiColor: .secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
                 }
             }
 

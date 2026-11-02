@@ -4,19 +4,128 @@ import Foundation
 import OrchardDomain
 #endif
 
-/// Production LLM provider connecting to Google Gemini API (gemini-2.5-flash)
-/// using the user's "Bring Your Own Key" stored securely in the device Keychain.
+/// Information describing a Gemini free-tier model in the fallback chain.
+public struct GeminiModelInfo: Sendable, Codable, Equatable {
+    public let id: String
+    public let displayName: String
+    public let descriptionGreek: String
+    public let tier: String
+    public let rpmFree: Int
+
+    public init(id: String, displayName: String, descriptionGreek: String, tier: String, rpmFree: Int) {
+        self.id = id
+        self.displayName = displayName
+        self.descriptionGreek = descriptionGreek
+        self.tier = tier
+        self.rpmFree = rpmFree
+    }
+}
+
+/// Result of an automated connection and fallback chain verification.
+public struct ConnectionTestResult: Sendable, Codable, Equatable {
+    public let isSuccess: Bool
+    public let successfulModel: String?
+    public let latencyMs: Double
+    public let attemptedModels: [String]
+    public let fallbackOccurred: Bool
+    public let message: String
+
+    public init(
+        isSuccess: Bool,
+        successfulModel: String?,
+        latencyMs: Double,
+        attemptedModels: [String],
+        fallbackOccurred: Bool,
+        message: String
+    ) {
+        self.isSuccess = isSuccess
+        self.successfulModel = successfulModel
+        self.latencyMs = latencyMs
+        self.attemptedModels = attemptedModels
+        self.fallbackOccurred = fallbackOccurred
+        self.message = message
+    }
+}
+
+/// Production LLM provider connecting to Google Gemini API using the user's
+/// "Bring Your Own Key" (stored securely in Keychain) with an automated Fallback Chain
+/// across all free-tier models available in Google AI Studio.
 public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
     public let id: String = "gemini"
     public let name: String = "Google Gemini (Bring Your Own Key)"
 
-    private let customApiKey: String?
+    /// Standard fallback chain of free-tier models available in Google AI Studio.
+    /// Follows priority: Frontier Flash 2.5 -> Standard 2.0 -> Flash-Lite 2.0 -> Workhorse 1.5 -> High-throughput 8B -> Reasoning Pro 1.5.
+    public static let defaultFreeModelChain: [String] = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-8b",
+        "gemini-1.5-pro"
+    ]
 
-    public init(apiKey: String? = nil) {
+    /// Metadata describing each supported free-tier model.
+    public static let availableModelMetadata: [GeminiModelInfo] = [
+        GeminiModelInfo(
+            id: "gemini-2.5-flash",
+            displayName: "Gemini 2.5 Flash",
+            descriptionGreek: "Κορυφαίο σύγχρονο Flash μοντέλο με υψηλή ταχύτητα και συλλογιστική.",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 15
+        ),
+        GeminiModelInfo(
+            id: "gemini-2.0-flash",
+            displayName: "Gemini 2.0 Flash",
+            descriptionGreek: "Εξαιρετικά ταχύ standard 2.0 μοντέλο για άμεσες αναλύσεις.",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 15
+        ),
+        GeminiModelInfo(
+            id: "gemini-2.0-flash-lite",
+            displayName: "Gemini 2.0 Flash Lite",
+            descriptionGreek: "Εξαιρετικά ελαφρύ μοντέλο με χαμηλό latency όταν υπάρχει φόρτος.",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 30
+        ),
+        GeminiModelInfo(
+            id: "gemini-1.5-flash",
+            displayName: "Gemini 1.5 Flash",
+            descriptionGreek: "Το πιο αξιόπιστο και δοκιμασμένο workhorse μοντέλο της Google.",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 15
+        ),
+        GeminiModelInfo(
+            id: "gemini-1.5-flash-8b",
+            displayName: "Gemini 1.5 Flash 8B",
+            descriptionGreek: "8-Billion parameter μοντέλο, ιδανικό για υψηλό throughput & backup.",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 15
+        ),
+        GeminiModelInfo(
+            id: "gemini-1.5-pro",
+            displayName: "Gemini 1.5 Pro",
+            descriptionGreek: "Μοντέλο σύνθετης συλλογιστικής ως τελικό fallback.",
+            tier: "Free Tier (Google AI Studio)",
+            rpmFree: 2
+        )
+    ]
+
+    public let modelChain: [String]
+    private let customApiKey: String?
+    private let urlSession: URLSession
+
+    public init(
+        apiKey: String? = nil,
+        modelChain: [String] = GeminiLLMProvider.defaultFreeModelChain,
+        session: URLSession = .shared
+    ) {
         self.customApiKey = apiKey
+        self.modelChain = modelChain.isEmpty ? GeminiLLMProvider.defaultFreeModelChain : modelChain
+        self.urlSession = session
     }
 
-    private var resolvedApiKey: String? {
+    public var resolvedApiKey: String? {
         if let key = customApiKey, !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return key
         }
@@ -30,6 +139,7 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
         return true
     }
 
+    // MARK: - Generation via Fallback Chain
     public func generate<T: Decodable & Sendable>(
         prompt: String,
         systemPrompt: String,
@@ -39,15 +149,158 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
             throw LLMError.unavailable("Gemini API key is not configured. Add your key in Settings.")
         }
 
-        let endpointString = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\(apiKey)"
+        var attemptHistory: [(model: String, status: Int?, message: String)] = []
+
+        for (index, model) in modelChain.enumerated() {
+            let start = CFAbsoluteTimeGetCurrent()
+            do {
+                let decoded = try await executeSingleModelRequest(
+                    model: model,
+                    apiKey: apiKey,
+                    prompt: prompt,
+                    systemPrompt: systemPrompt,
+                    schema: schema
+                )
+
+                let durationMs = (CFAbsoluteTimeGetCurrent() - start) * 1000.0
+                await TelemetryService.shared.log(
+                    event: .aiRequestExecuted(tool: "gemini-\(model)", durationMs: durationMs, success: true)
+                )
+
+                #if DEBUG
+                if index > 0 {
+                    print("⚡ Gemini fallback succeeded on '\(model)' after \(index) failure(s).")
+                }
+                #endif
+
+                return decoded
+            } catch let error as GeminiModelError {
+                let durationMs = (CFAbsoluteTimeGetCurrent() - start) * 1000.0
+                await TelemetryService.shared.log(
+                    event: .aiRequestExecuted(tool: "gemini-\(model)", durationMs: durationMs, success: false)
+                )
+
+                attemptHistory.append((model: model, status: error.statusCode, message: error.message))
+
+                // Fast-fail if API key itself is unauthorized or invalid
+                if error.isFatalAuthError {
+                    throw LLMError.unavailable("Gemini API Key rejected: \(error.message)")
+                }
+
+                // Fallback to next model in chain for 429 (rate limit), 503 (overload), 404 (not found), etc.
+                continue
+            } catch {
+                let durationMs = (CFAbsoluteTimeGetCurrent() - start) * 1000.0
+                await TelemetryService.shared.log(
+                    event: .aiRequestExecuted(tool: "gemini-\(model)", durationMs: durationMs, success: false)
+                )
+                attemptHistory.append((model: model, status: nil, message: error.localizedDescription))
+                continue
+            }
+        }
+
+        let summary = attemptHistory.map { entry in
+            let statusText = entry.status.map { "HTTP \($0): " } ?? ""
+            return "\(entry.model) (\(statusText)\(entry.message))"
+        }.joined(separator: " | ")
+
+        throw LLMError.requestFailed("All \(modelChain.count) models in Gemini fallback chain failed: [\(summary)]")
+    }
+
+    // MARK: - Connection & Chain Diagnostic Test
+    private struct PingCheck: Codable, Sendable {
+        let status: String?
+    }
+
+    public func testConnection() async throws -> ConnectionTestResult {
+        guard let apiKey = resolvedApiKey, !apiKey.isEmpty else {
+            return ConnectionTestResult(
+                isSuccess: false,
+                successfulModel: nil,
+                latencyMs: 0,
+                attemptedModels: [],
+                fallbackOccurred: false,
+                message: "Δεν βρέθηκε Gemini API Key στο Keychain. Παρακαλώ εισάγετε το κλειδί σας."
+            )
+        }
+
+        let startTime = CFAbsoluteTimeGetCurrent()
+        var attempted: [String] = []
+
+        for (index, model) in modelChain.enumerated() {
+            attempted.append(model)
+            let pingStart = CFAbsoluteTimeGetCurrent()
+            do {
+                _ = try await executeSingleModelRequest(
+                    model: model,
+                    apiKey: apiKey,
+                    prompt: "Respond with JSON: {\"status\":\"ok\"}",
+                    systemPrompt: "You are a test ping service. Return valid JSON only.",
+                    schema: PingCheck.self
+                )
+                let totalLatency = (CFAbsoluteTimeGetCurrent() - startTime) * 1000.0
+                let singleLatency = (CFAbsoluteTimeGetCurrent() - pingStart) * 1000.0
+                let fallbackUsed = index > 0
+
+                let msg: String
+                if fallbackUsed {
+                    msg = "Επιτυχής σύνδεση μέσω Fallback στο '\(model)' (\(Int(singleLatency))ms). Προηγούμενα μοντέλα: \(attempted.dropLast().joined(separator: ", "))."
+                } else {
+                    msg = "Επιτυχής άμεση σύνδεση με το κύριο μοντέλο '\(model)' (\(Int(singleLatency))ms)."
+                }
+
+                return ConnectionTestResult(
+                    isSuccess: true,
+                    successfulModel: model,
+                    latencyMs: totalLatency,
+                    attemptedModels: attempted,
+                    fallbackOccurred: fallbackUsed,
+                    message: msg
+                )
+            } catch let error as GeminiModelError {
+                if error.isFatalAuthError {
+                    return ConnectionTestResult(
+                        isSuccess: false,
+                        successfulModel: nil,
+                        latencyMs: (CFAbsoluteTimeGetCurrent() - startTime) * 1000.0,
+                        attemptedModels: attempted,
+                        fallbackOccurred: false,
+                        message: "Το API Key απορρίφθηκε από το Gemini: \(error.message)"
+                    )
+                }
+                continue
+            } catch {
+                continue
+            }
+        }
+
+        return ConnectionTestResult(
+            isSuccess: false,
+            successfulModel: nil,
+            latencyMs: (CFAbsoluteTimeGetCurrent() - startTime) * 1000.0,
+            attemptedModels: attempted,
+            fallbackOccurred: true,
+            message: "Όλα τα μοντέλα της αλυσίδας (\(attempted.joined(separator: ", "))) απέτυχαν."
+        )
+    }
+
+    // MARK: - Internal HTTP Request Executor
+    private func executeSingleModelRequest<T: Decodable & Sendable>(
+        model: String,
+        apiKey: String,
+        prompt: String,
+        systemPrompt: String,
+        schema: T.Type
+    ) async throws -> T {
+        let endpointString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)"
         guard let url = URL(string: endpointString) else {
-            throw LLMError.requestFailed("Invalid Gemini API endpoint URL")
+            throw GeminiModelError(statusCode: nil, message: "Invalid URL for model \(model)", isFatalAuthError: false)
         }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 25.0
+        request.timeoutInterval = 20.0
 
         let fullPrompt = """
         \(systemPrompt)
@@ -77,18 +330,29 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await URLSession.shared.data(for: request)
+            (data, response) = try await urlSession.data(for: request)
         } catch {
-            throw LLMError.requestFailed("Network error connecting to Gemini API: \(error.localizedDescription)")
+            throw GeminiModelError(
+                statusCode: nil,
+                message: "Network error: \(error.localizedDescription)",
+                isFatalAuthError: false
+            )
         }
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw LLMError.requestFailed("Invalid HTTP response from Gemini")
+            throw GeminiModelError(statusCode: nil, message: "Non-HTTP response", isFatalAuthError: false)
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw LLMError.requestFailed("Gemini API returned status code \(httpResponse.statusCode): \(errorBody)")
+            let errorBody = String(data: data, encoding: .utf8) ?? "HTTP \(httpResponse.statusCode)"
+            let isFatal = (httpResponse.statusCode == 400 && errorBody.contains("API_KEY_INVALID")) ||
+                          (httpResponse.statusCode == 403 && (errorBody.contains("PERMISSION_DENIED") || errorBody.contains("API key not valid")))
+
+            throw GeminiModelError(
+                statusCode: httpResponse.statusCode,
+                message: errorBody,
+                isFatalAuthError: isFatal
+            )
         }
 
         // Parse Gemini Response JSON
@@ -99,10 +363,10 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
               let parts = content["parts"] as? [[String: Any]],
               let firstPart = parts.first,
               let textResponse = firstPart["text"] as? String else {
-            throw LLMError.invalidResponse("Could not parse candidates from Gemini response")
+            throw GeminiModelError(statusCode: httpResponse.statusCode, message: "Malformed candidates in Gemini response", isFatalAuthError: false)
         }
 
-        // Clean any stray markdown ticks if present
+        // Clean any markdown code ticks if present
         let cleanJson = textResponse
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "```json", with: "")
@@ -110,14 +374,31 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let textData = cleanJson.data(using: .utf8) else {
-            throw LLMError.decodingFailed("Failed to encode clean JSON text")
+            throw GeminiModelError(statusCode: httpResponse.statusCode, message: "Cannot encode UTF8", isFatalAuthError: false)
         }
 
         do {
             let decoder = JSONDecoder()
             return try decoder.decode(T.self, from: textData)
         } catch {
-            throw LLMError.decodingFailed("Failed to decode model into \(T.self): \(error.localizedDescription). Raw: \(cleanJson)")
+            throw GeminiModelError(
+                statusCode: httpResponse.statusCode,
+                message: "Decoding failed for \(T.self): \(error.localizedDescription). Raw: \(cleanJson)",
+                isFatalAuthError: false
+            )
         }
+    }
+}
+
+/// Internal model error tracking HTTP status codes and fatal auth issues.
+public struct GeminiModelError: Error, Sendable {
+    public let statusCode: Int?
+    public let message: String
+    public let isFatalAuthError: Bool
+
+    public init(statusCode: Int?, message: String, isFatalAuthError: Bool) {
+        self.statusCode = statusCode
+        self.message = message
+        self.isFatalAuthError = isFatalAuthError
     }
 }

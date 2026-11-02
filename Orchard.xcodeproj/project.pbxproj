@@ -11,6 +11,7 @@
 		01F5A45B241C342FFEC66AC0 /* GeminiLLMProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A297FC821E92ADD0A70C9A /* GeminiLLMProvider.swift */; };
 		036C8162F9CBF3250411F901 /* CloudLLMProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62DD04EA918AC89503FD714C /* CloudLLMProvider.swift */; };
 		045AF394AF3AFC51FA8DF327 /* HealthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D41E20BA9F2EBE20A33CA5F /* HealthStore.swift */; };
+		112AFD46913A73424B7CB98D /* GeminiFallbackChainTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625D8B55F76555116104EF64 /* GeminiFallbackChainTests.swift */; };
 		11C503D524A9D9830C170DE8 /* SigningGuardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FB1B2E2A1CAC9A8A31CE58C /* SigningGuardTests.swift */; };
 		1390C203D8596354373D4BB3 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68F347123778A3A2BAF3904D /* NotificationService.swift */; };
 		157D74AE7CDA3C54F4469A9C /* TelemetryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F394F34C75D97A7BEBEA0240 /* TelemetryService.swift */; };
@@ -116,6 +117,7 @@
 		505EAA093D3FA952D95062F1 /* WeeklyStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyStatsTests.swift; sourceTree = "<group>"; };
 		58ACA03B78BD218D9B2A3E1B /* plan.sample.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = plan.sample.json; sourceTree = "<group>"; };
 		60DA48F62778AE0868A3FDE8 /* NotificationCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCategory.swift; sourceTree = "<group>"; };
+		625D8B55F76555116104EF64 /* GeminiFallbackChainTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiFallbackChainTests.swift; sourceTree = "<group>"; };
 		62DD04EA918AC89503FD714C /* CloudLLMProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudLLMProvider.swift; sourceTree = "<group>"; };
 		67A9324DED84D392E498A021 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		68F347123778A3A2BAF3904D /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
@@ -424,6 +426,7 @@
 				9165EB3902B8A0A896EE0EA6 /* CalorieEngineTests.swift */,
 				7826A519F49CABCD9ACAFF84 /* CatchupAdjustmentValidatorTests.swift */,
 				9013CA05082DE39D2CA43669 /* FoodEstimateValidatorTests.swift */,
+				625D8B55F76555116104EF64 /* GeminiFallbackChainTests.swift */,
 				B818E3DAD1F53B9620BE79F3 /* LiveSmokeTests.swift */,
 				21F2638030F33C482FD8F4AF /* LLMRouterTests.swift */,
 				2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */,
@@ -538,6 +541,7 @@
 				3B5D792D723EC4DA5E345514 /* CalorieEngineTests.swift in Sources */,
 				635A4047314CB7A010334AF8 /* CatchupAdjustmentValidatorTests.swift in Sources */,
 				AF8FDA51D16CAD3EA819E2AB /* FoodEstimateValidatorTests.swift in Sources */,
+				112AFD46913A73424B7CB98D /* GeminiFallbackChainTests.swift in Sources */,
 				8CEF6D1C4ACA90A91933933E /* LLMRouterTests.swift in Sources */,
 				00A11A8D767B7CD25D5508C1 /* LiveSmokeTests.swift in Sources */,
 				2BB54B5E6958DB36F8EDC416 /* M0BootstrapTests.swift in Sources */,
