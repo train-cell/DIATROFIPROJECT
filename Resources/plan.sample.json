@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "settings": {
+    "wake": "07:30",
+    "bed": "23:30",
+    "minMealGapMinutes": 90
+  },
+  "weekly": {
+    "mon": "training",
+    "tue": "rest",
+    "wed": "training",
+    "thu": "rest",
+    "fri": "training",
+    "sat": "competition",
+    "sun": "rest"
+  },
+  "templates": {
+    "training": {
+      "trainingSessions": [
+        {
+          "start": "18:00",
+          "durationMinutes": 90,
+          "estKcal": 700
+        }
+      ],
+      "items": [
+        {
+          "id": "breakfast",
+          "type": "meal",
+          "title": "Breakfast",
+          "anchor": {
+            "kind": "afterWake",
+            "minutes": 30
+          },
+          "kcal": 500,
+          "protein": 30,
+          "carbs": 60,
+          "fat": 15,
+          "fallbackTime": "08:00"
+        },
+        {
+          "id": "pre",
+          "type": "meal",
+          "title": "Pre-training meal",
+          "anchor": {
+            "kind": "beforeTraining",
+            "minutes": 90
+          },
+          "kcal": 400,
+          "protein": 20,
+          "carbs": 70,
+          "fat": 5,
+          "fallbackTime": "16:30"
+        },
+        {
+          "id": "supp-a",
+          "type": "supplement",
+          "title": "Supplement A",
+          "anchor": {
+            "kind": "withItem",
+            "itemId": "breakfast"
+          }
+        },
+        {
+          "id": "post",
+          "type": "meal",
+          "title": "Post-training meal",
+          "anchor": {
+            "kind": "afterTraining",
+            "minutes": 30
+          },
+          "kcal": 600,
+          "protein": 40,
+          "carbs": 70,
+          "fat": 15,
+          "fallbackTime": "20:00"
+        }
+      ],
+      "rules": [
+        {
+          "type": "avoid",
+          "text": "Example: nothing heavy within 2h of training"
+        },
+        {
+          "type": "prefer",
+          "text": "Example: protein with every meal"
+        }
+      ]
+    },
+    "rest": {
+      "trainingSessions": [],
+      "items": [],
+      "rules": []
+    },
+    "competition": {
+      "trainingSessions": [],
+      "items": [],
+      "rules": []
+    }
+  },
+  "overrides": {
+    "2026-12-24": "rest"
+  }
+}

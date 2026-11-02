@@ -1,0 +1,536 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2BB54B5E6958DB36F8EDC416 /* M0BootstrapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */; };
+		2D8D2B56379298FD0DC94EFE /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2923E27246F0A69F81620199 /* TodayView.swift */; };
+		454ED84BFE4ABC04123E3D5E /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320D2D196AA102C566CFD341 /* InsightsView.swift */; };
+		4AA0C7ACB8EF0DE51E84D5DF /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A0FEA15B915829B9D3C9A231 /* Localizable.xcstrings */; };
+		53950293CE12B9518A65CD43 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B237F2F944DBFD6CEB75D33A /* PlanView.swift */; };
+		6157FD6058A9A2DB0DD9B1B4 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67A9324DED84D392E498A021 /* SettingsView.swift */; };
+		8A37B5A22832872774E5F716 /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D8246E1CF02C0806892A29 /* LogView.swift */; };
+		A1CA02B9F07831A6A9B6BD4A /* ColorTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C66352A9543BCAB049551DB /* ColorTokens.swift */; };
+		C46381AD253A73E0FA0CDD05 /* OrchardApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07DFE0766F4DBB3FC800F2E4 /* OrchardApp.swift */; };
+		CEC061EB25F166E0550D40FD /* DomainPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D850188FDE81A57B3A8344 /* DomainPlaceholder.swift */; };
+		D6420D7DC44FCE73A3C05198 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ED446121583289DBD7DBA6F /* AppContainer.swift */; };
+		D67C6BA0AF34355B64853D30 /* plan.sample.json in Resources */ = {isa = PBXBuildFile; fileRef = 58ACA03B78BD218D9B2A3E1B /* plan.sample.json */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DD29C9C237A73D6002185751 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 68AC9F6DC3A33252B5BFDD46 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2B7E2C1B4DBEACC4E41DDD40;
+			remoteInfo = Orchard;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		07DFE0766F4DBB3FC800F2E4 /* OrchardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrchardApp.swift; sourceTree = "<group>"; };
+		13D850188FDE81A57B3A8344 /* DomainPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainPlaceholder.swift; sourceTree = "<group>"; };
+		15D8246E1CF02C0806892A29 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
+		1B9961856CB85AD4AD1E0FB3 /* Orchard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Orchard.entitlements; sourceTree = "<group>"; };
+		1C66352A9543BCAB049551DB /* ColorTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorTokens.swift; sourceTree = "<group>"; };
+		2923E27246F0A69F81620199 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M0BootstrapTests.swift; sourceTree = "<group>"; };
+		320D2D196AA102C566CFD341 /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
+		58ACA03B78BD218D9B2A3E1B /* plan.sample.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = plan.sample.json; sourceTree = "<group>"; };
+		67A9324DED84D392E498A021 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		8ED446121583289DBD7DBA6F /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		A0FEA15B915829B9D3C9A231 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		B237F2F944DBFD6CEB75D33A /* PlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanView.swift; sourceTree = "<group>"; };
+		B74F3BFA4C9F8BAB1B1373AA /* OrchardTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OrchardTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BDED28506F494BA8764489E8 /* Orchard.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Orchard.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7DF00D61173E8EB690CE9EA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		083E857BB524F8807DF8668E /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				700644DA52DB148B1EE105B3 /* Insights */,
+				3DD4083D4ACFB7B4DB336E03 /* Log */,
+				B0A5609E34FD4D343C19760F /* Plan */,
+				9668A07C8C95FF88DA21F309 /* Settings */,
+				920775E9B7A498356E15BCB5 /* Today */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		36747EF97F505FD2EC814928 = {
+			isa = PBXGroup;
+			children = (
+				558D66AEC068F9B6AD91D482 /* App */,
+				37FBF3A7260215CE496E49D0 /* DesignSystem */,
+				7E5A1166E8D11E5A70E623DF /* Domain */,
+				083E857BB524F8807DF8668E /* Features */,
+				A44EE50E77C87E7F8E6DF172 /* Resources */,
+				BD1684593569567CA6703812 /* Services */,
+				841CA06DE5DE199F65999900 /* Tests */,
+				708939E69BF58367C122AE1E /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		37FBF3A7260215CE496E49D0 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				1C66352A9543BCAB049551DB /* ColorTokens.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		3DD4083D4ACFB7B4DB336E03 /* Log */ = {
+			isa = PBXGroup;
+			children = (
+				15D8246E1CF02C0806892A29 /* LogView.swift */,
+			);
+			path = Log;
+			sourceTree = "<group>";
+		};
+		558D66AEC068F9B6AD91D482 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				8ED446121583289DBD7DBA6F /* AppContainer.swift */,
+				07DFE0766F4DBB3FC800F2E4 /* OrchardApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		700644DA52DB148B1EE105B3 /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				320D2D196AA102C566CFD341 /* InsightsView.swift */,
+			);
+			path = Insights;
+			sourceTree = "<group>";
+		};
+		708939E69BF58367C122AE1E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BDED28506F494BA8764489E8 /* Orchard.app */,
+				B74F3BFA4C9F8BAB1B1373AA /* OrchardTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7E5A1166E8D11E5A70E623DF /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				13D850188FDE81A57B3A8344 /* DomainPlaceholder.swift */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		841CA06DE5DE199F65999900 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				D528FA992B5D8DC1D87228A7 /* OrchardTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		920775E9B7A498356E15BCB5 /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				2923E27246F0A69F81620199 /* TodayView.swift */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
+		9668A07C8C95FF88DA21F309 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				67A9324DED84D392E498A021 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		A44EE50E77C87E7F8E6DF172 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				E7DF00D61173E8EB690CE9EA /* Info.plist */,
+				A0FEA15B915829B9D3C9A231 /* Localizable.xcstrings */,
+				1B9961856CB85AD4AD1E0FB3 /* Orchard.entitlements */,
+				58ACA03B78BD218D9B2A3E1B /* plan.sample.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		B0A5609E34FD4D343C19760F /* Plan */ = {
+			isa = PBXGroup;
+			children = (
+				B237F2F944DBFD6CEB75D33A /* PlanView.swift */,
+			);
+			path = Plan;
+			sourceTree = "<group>";
+		};
+		BD1684593569567CA6703812 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		D528FA992B5D8DC1D87228A7 /* OrchardTests */ = {
+			isa = PBXGroup;
+			children = (
+				2E087A77966E9F346D468E0E /* M0BootstrapTests.swift */,
+			);
+			path = OrchardTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2B7E2C1B4DBEACC4E41DDD40 /* Orchard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 88C45955271DE740EE0BCB6F /* Build configuration list for PBXNativeTarget "Orchard" */;
+			buildPhases = (
+				B10658D0089FA37ABB49975A /* Sources */,
+				F0EB6BDBBCCD33247E9480DA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Orchard;
+			packageProductDependencies = (
+			);
+			productName = Orchard;
+			productReference = BDED28506F494BA8764489E8 /* Orchard.app */;
+			productType = "com.apple.product-type.application";
+		};
+		55767068F1FB876AF1A88932 /* OrchardTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 13C438AF97AD2921E4FA8733 /* Build configuration list for PBXNativeTarget "OrchardTests" */;
+			buildPhases = (
+				65F67D3712CAD176D78694A1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B592ABF995C2651B38C99CD3 /* PBXTargetDependency */,
+			);
+			name = OrchardTests;
+			packageProductDependencies = (
+			);
+			productName = OrchardTests;
+			productReference = B74F3BFA4C9F8BAB1B1373AA /* OrchardTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		68AC9F6DC3A33252B5BFDD46 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					2B7E2C1B4DBEACC4E41DDD40 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 751150A25C83ACCD8D06491C /* Build configuration list for PBXProject "Orchard" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				el,
+				en,
+			);
+			mainGroup = 36747EF97F505FD2EC814928;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 708939E69BF58367C122AE1E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2B7E2C1B4DBEACC4E41DDD40 /* Orchard */,
+				55767068F1FB876AF1A88932 /* OrchardTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F0EB6BDBBCCD33247E9480DA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4AA0C7ACB8EF0DE51E84D5DF /* Localizable.xcstrings in Resources */,
+				D67C6BA0AF34355B64853D30 /* plan.sample.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		65F67D3712CAD176D78694A1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2BB54B5E6958DB36F8EDC416 /* M0BootstrapTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10658D0089FA37ABB49975A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D6420D7DC44FCE73A3C05198 /* AppContainer.swift in Sources */,
+				A1CA02B9F07831A6A9B6BD4A /* ColorTokens.swift in Sources */,
+				CEC061EB25F166E0550D40FD /* DomainPlaceholder.swift in Sources */,
+				454ED84BFE4ABC04123E3D5E /* InsightsView.swift in Sources */,
+				8A37B5A22832872774E5F716 /* LogView.swift in Sources */,
+				C46381AD253A73E0FA0CDD05 /* OrchardApp.swift in Sources */,
+				53950293CE12B9518A65CD43 /* PlanView.swift in Sources */,
+				6157FD6058A9A2DB0DD9B1B4 /* SettingsView.swift in Sources */,
+				2D8D2B56379298FD0DC94EFE /* TodayView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B592ABF995C2651B38C99CD3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2B7E2C1B4DBEACC4E41DDD40 /* Orchard */;
+			targetProxy = DD29C9C237A73D6002185751 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		23B6D1E81F3721DD18136638 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		7A6305BD583CBD4F728B17AC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyd3n.orchardTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Orchard.app/Orchard";
+			};
+			name = Release;
+		};
+		87161BD45C311DF415E8A675 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_ENTITLEMENTS = Resources/Orchard.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyd3n.orchard;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		D7777A37597B332BA4DBA4F5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_ENTITLEMENTS = Resources/Orchard.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyd3n.orchard;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E50909F699DE9BFEB9DE6811 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyd3n.orchardTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Orchard.app/Orchard";
+			};
+			name = Debug;
+		};
+		F8DDFC0F1DBC58C84F22322D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		13C438AF97AD2921E4FA8733 /* Build configuration list for PBXNativeTarget "OrchardTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E50909F699DE9BFEB9DE6811 /* Debug */,
+				7A6305BD583CBD4F728B17AC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		751150A25C83ACCD8D06491C /* Build configuration list for PBXProject "Orchard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F8DDFC0F1DBC58C84F22322D /* Debug */,
+				23B6D1E81F3721DD18136638 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		88C45955271DE740EE0BCB6F /* Build configuration list for PBXNativeTarget "Orchard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D7777A37597B332BA4DBA4F5 /* Debug */,
+				87161BD45C311DF415E8A675 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 68AC9F6DC3A33252B5BFDD46 /* Project object */;
+}

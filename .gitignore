@@ -1,0 +1,20 @@
+# Confidential User Data & Secrets (Non-negotiable)
+plan.json
+Secrets*
+*.secret
+*.key
+
+# Xcode & Swift Build Artifacts
+.build/
+DerivedData/
+*.xcworkspace
+!default.xcworkspace
+*.xcuserdatad
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+
+# macOS System Files
+.DS_Store
+*.swp
+*~
