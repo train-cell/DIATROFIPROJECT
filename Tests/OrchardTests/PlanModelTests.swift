@@ -199,4 +199,115 @@ final class PlanModelTests: XCTestCase {
             XCTAssertTrue(events.count >= 5, "Template \(templateName) should have at least 5 meals/slots")
         }
     }
+
+    func testRealPlanAllSevenDaysNutritionAndDay7SpecialLayout() throws {
+        let testFileUrl = URL(fileURLWithPath: #filePath)
+        let rootDir = testFileUrl.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let realPlanUrl = rootDir.appendingPathComponent("plan.json")
+        guard FileManager.default.fileExists(atPath: realPlanUrl.path) else { return }
+
+        let plan = try PlanLoader.loadPlan(from: realPlanUrl)
+
+        // 1. Structural validation via PlanDraftValidator
+        let validationResult = PlanDraftValidator.validate(plan: plan)
+        XCTAssertEqual(validationResult, .valid, "Real plan.json must pass PlanDraftValidator without errors")
+
+        // 2. Calorie totals across all 7 days
+        let expectedDailyKcal: [String: Double] = [
+            "day_1": 1820.0,
+            "day_2": 1770.0,
+            "day_3": 2000.0,
+            "day_4": 1840.0,
+            "day_5": 1960.0,
+            "day_6": 1720.0,
+            "day_7": 2000.0
+        ]
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let baseDate = calendar.date(from: DateComponents(year: 2026, month: 11, day: 2, hour: 8, minute: 0))!
+
+        for (dayKey, expectedKcal) in expectedDailyKcal {
+            guard let template = plan.templates[dayKey] else {
+                XCTFail("Missing template \(dayKey)")
+                continue
+            }
+
+            // CalorieEngine calculation
+            let plannedKcal = CalorieEngine.plannedDayKcal(template: template)
+            XCTAssertEqual(plannedKcal, expectedKcal, "Calorie mismatch for \(dayKey): expected \(expectedKcal), got \(plannedKcal)")
+
+            // Anchor math and schedule resolution
+            let events = ScheduleResolver.resolve(date: baseDate, plan: plan, selectedTemplateName: dayKey, calendar: calendar)
+            XCTAssertEqual(events.count, template.items.count, "All items in \(dayKey) must resolve to events")
+
+            for event in events {
+                XCTAssertFalse(event.hasConflict, "Event \(event.itemId) in \(dayKey) should not have conflicts, but got: \(event.conflictReason ?? "")")
+            }
+
+            // Verify days 1-6 contain rice cakes snack (ρυζογκοφρέτες)
+            if dayKey != "day_7" {
+                let hasRiceCakes = template.items.contains { $0.title.contains("ρυζογκοφρέτες") }
+                XCTAssertTrue(hasRiceCakes, "\(dayKey) should include midday rice cakes snack")
+            }
+        }
+
+        // 3. Day 7 Special Layout In-Depth Verification
+        let day7 = try XCTUnwrap(plan.templates["day_7"])
+        XCTAssertEqual(day7.items.count, 5, "Day 7 has 5 items layout")
+
+        // Day 7 training session: 12:30, 75 min -> ends at 13:45
+        let training = try XCTUnwrap(day7.trainingSessions.first)
+        XCTAssertEqual(training.start, "12:30")
+        XCTAssertEqual(training.durationMinutes, 75)
+        XCTAssertEqual(training.estKcal, 550)
+
+        // Resolve Day 7
+        let day7Events = ScheduleResolver.resolve(date: baseDate, plan: plan, selectedTemplateName: "day_7", calendar: calendar)
+
+        // 3a. Breakfast: Porridge at 10:00 (360 kcal)
+        let breakfast = try XCTUnwrap(day7Events.first { $0.itemId == "d7_breakfast" })
+        XCTAssertTrue(breakfast.item.title.contains("Porridge"))
+        XCTAssertEqual(breakfast.item.kcal, 360.0)
+        XCTAssertEqual(calendar.component(.hour, from: breakfast.resolvedTime), 10)
+        XCTAssertEqual(calendar.component(.minute, from: breakfast.resolvedTime), 0)
+
+        // 3b. Morning snack: Fruit at 12:00 (100 kcal)
+        let snack = try XCTUnwrap(day7Events.first { $0.itemId == "d7_morning_snack" })
+        XCTAssertEqual(snack.item.kcal, 100.0)
+        XCTAssertEqual(calendar.component(.hour, from: snack.resolvedTime), 12)
+        XCTAssertEqual(calendar.component(.minute, from: snack.resolvedTime), 0)
+
+        // 3c. Big post-workout steak meal: 14:30 (780 kcal, 65g P)
+        // afterTraining 45 min -> 12:30 + 75m + 45m = 13:45 + 45m = 14:30
+        let steakMeal = try XCTUnwrap(day7Events.first { $0.itemId == "d7_midday_postworkout_combo" })
+        XCTAssertTrue(steakMeal.item.title.contains("μπριζόλα"))
+        XCTAssertEqual(steakMeal.item.kcal, 780.0)
+        XCTAssertEqual(steakMeal.item.protein, 65.0)
+        XCTAssertEqual(calendar.component(.hour, from: steakMeal.resolvedTime), 14)
+        XCTAssertEqual(calendar.component(.minute, from: steakMeal.resolvedTime), 30)
+
+        // 3d. Verify NO rice cakes on Day 7
+        let day7HasRiceCakes = day7.items.contains { $0.title.contains("ρυζογκοφρέτες") }
+        XCTAssertFalse(day7HasRiceCakes, "Day 7 special layout should have NO rice cakes")
+
+        // 3e. Evening yogurt: 20:30 (240 kcal, 20g P)
+        let dinnerYogurt = try XCTUnwrap(day7Events.first { $0.itemId == "d7_dinner" })
+        XCTAssertTrue(dinnerYogurt.item.title.contains("γιαούρτι"))
+        XCTAssertEqual(dinnerYogurt.item.kcal, 240.0)
+        XCTAssertEqual(dinnerYogurt.item.protein, 20.0)
+        XCTAssertEqual(calendar.component(.hour, from: dinnerYogurt.resolvedTime), 20)
+        XCTAssertEqual(calendar.component(.minute, from: dinnerYogurt.resolvedTime), 30)
+
+        // 3f. Extra evening meal: 22:15 (520 kcal, 30g P)
+        let extraMeal = try XCTUnwrap(day7Events.first { $0.itemId == "d7_extra" })
+        XCTAssertEqual(extraMeal.item.kcal, 520.0)
+        XCTAssertEqual(extraMeal.item.protein, 30.0)
+        XCTAssertEqual(calendar.component(.hour, from: extraMeal.resolvedTime), 22)
+        XCTAssertEqual(calendar.component(.minute, from: extraMeal.resolvedTime), 15)
+
+        // 3g. Day 7 Calorie Total
+        let totalDay7Kcal = day7Events.reduce(0.0) { $0 + ($1.item.kcal ?? 0.0) }
+        XCTAssertEqual(totalDay7Kcal, 2000.0)
+    }
 }
