@@ -12,6 +12,7 @@ public struct SleepDetailView: View {
 
     @State private var subjectiveRating: Int
     @State private var selectedTags: Set<String>
+    @State private var animatedProgress: CGFloat = 0.0
 
     private let availableTags = [
         "Ξεκούραστος", "Βαθύς Ύπνος", "Διακοπές", "Καφεΐνη αργά", "Αργά στο κρεβάτι", "Έντονη Προπόνηση", "Στρες"
@@ -24,7 +25,9 @@ public struct SleepDetailView: View {
     }
 
     private var activeEntry: SleepEntry {
-        if let existing = sleepEntry {
+        if var existing = sleepEntry {
+            existing.rating = subjectiveRating
+            existing.tags = Array(selectedTags)
             return existing
         }
         // Realistic default sample if no Apple Watch entry yet today
@@ -80,6 +83,16 @@ public struct SleepDetailView: View {
                     .foregroundStyle(OrchardColors.appleRed)
                 }
             }
+            .onAppear {
+                withAnimation(.spring(response: 0.85, dampingFraction: 0.72)) {
+                    animatedProgress = CGFloat(activeEntry.recoveryScore) / 100.0
+                }
+            }
+            .onChange(of: activeEntry.recoveryScore) { _, newScore in
+                withAnimation(.spring(response: 0.85, dampingFraction: 0.72)) {
+                    animatedProgress = CGFloat(newScore) / 100.0
+                }
+            }
         }
     }
 
@@ -94,7 +107,7 @@ public struct SleepDetailView: View {
 
                 // Progress Arc (Bevel Gradient)
                 Circle()
-                    .trim(from: 0.0, to: CGFloat(activeEntry.recoveryScore) / 100.0)
+                    .trim(from: 0.0, to: animatedProgress)
                     .stroke(
                         AngularGradient(
                             colors: [Color.cyan, Color.blue, Color.purple],
@@ -106,13 +119,13 @@ public struct SleepDetailView: View {
                     )
                     .rotationEffect(.degrees(-90))
                     .frame(width: 170, height: 170)
-                    .animation(.spring(response: 0.8, dampingFraction: 0.7), value: activeEntry.recoveryScore)
 
                 // Inner Stats
                 VStack(spacing: 4) {
                     Text("\(activeEntry.recoveryScore)%")
                         .font(.system(size: 42, weight: .bold, design: .rounded))
                         .foregroundStyle(OrchardColors.text)
+                        .contentTransition(.numericText())
 
                     Text("ΑΠΟΚΑΤΑΣΤΑΣΗ")
                         .font(.system(size: 10, weight: .heavy, design: .rounded))
@@ -125,6 +138,7 @@ public struct SleepDetailView: View {
             Text(recoveryHeadline(score: activeEntry.recoveryScore))
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(recoveryColor(score: activeEntry.recoveryScore))
+                .animation(.easeInOut(duration: 0.3), value: activeEntry.recoveryScore)
         }
         .padding(20)
         .frame(maxWidth: .infinity)
@@ -203,7 +217,7 @@ public struct SleepDetailView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Color(uiColor: .tertiarySystemGroupedBackground))
@@ -241,7 +255,7 @@ public struct SleepDetailView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Color(uiColor: .tertiarySystemGroupedBackground))
@@ -275,29 +289,31 @@ public struct SleepDetailView: View {
             }
 
             // Stacked Bar Hypnogram
-            let total = Double(activeEntry.inBedMinutes ?? (activeEntry.asleepMinutes ?? 480))
+            let total = max(1.0, Double(activeEntry.inBedMinutes ?? (activeEntry.asleepMinutes ?? 480)))
             let deep = Double(activeEntry.deepSleepMinutes ?? 90)
             let rem = Double(activeEntry.remSleepMinutes ?? 100)
             let core = Double(activeEntry.coreSleepMinutes ?? 250)
             let awake = Double(activeEntry.awakeMinutes ?? 30)
 
             GeometryReader { geo in
+                let spacingTotal: CGFloat = 3 * 3 // 3 spaces of 3pt
+                let availableWidth = max(0, geo.size.width - spacingTotal)
                 HStack(spacing: 3) {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color(red: 0.35, green: 0.30, blue: 0.85)) // Deep Purple
-                        .frame(width: max(8, geo.size.width * CGFloat(deep / total)))
+                        .frame(width: max(8, availableWidth * CGFloat(deep / total)))
 
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.cyan) // REM Cyan
-                        .frame(width: max(8, geo.size.width * CGFloat(rem / total)))
+                        .frame(width: max(8, availableWidth * CGFloat(rem / total)))
 
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.blue) // Core Blue
-                        .frame(width: max(8, geo.size.width * CGFloat(core / total)))
+                        .frame(width: max(8, availableWidth * CGFloat(core / total)))
 
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.orange.opacity(0.85)) // Awake Amber
-                        .frame(width: max(8, geo.size.width * CGFloat(awake / total)))
+                        .frame(width: max(8, availableWidth * CGFloat(awake / total)))
                 }
             }
             .frame(height: 24)
