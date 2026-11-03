@@ -211,10 +211,10 @@ public struct SleepDetailView: View {
                         .foregroundStyle(.secondary)
 
                     Text(activeEntry.hrvStatusDescription)
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .font(.system(size: 9.5, weight: .medium, design: .rounded))
                         .foregroundStyle(hrvVal >= 60 ? Color.green : Color.orange)
                         .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .minimumScaleFactor(0.85)
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -249,10 +249,10 @@ public struct SleepDetailView: View {
                         .foregroundStyle(.secondary)
 
                     Text(activeEntry.restingHeartRateStatusDescription)
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .font(.system(size: 9.5, weight: .medium, design: .rounded))
                         .foregroundStyle(rhrVal <= 55 ? Color.cyan : Color.secondary)
                         .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .minimumScaleFactor(0.85)
                 }
                 .padding(14)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
