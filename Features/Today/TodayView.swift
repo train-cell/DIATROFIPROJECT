@@ -357,13 +357,18 @@ public struct TodayView: View {
             remSleepMinutes: 105,
             coreSleepMinutes: 255,
             awakeMinutes: 30,
-            inBedMinutes: 475
+            inBedMinutes: 475,
+            hrvMs: 68.0,
+            restingHeartRateBpm: 52.0
         )
 
         let totalAsleep = sleep.asleepMinutes ?? 445
         let asleepHours = totalAsleep / 60
         let asleepRemainingMinutes = totalAsleep % 60
-        let restorativePct = Int(round(sleep.restorativePercentage ?? 42.0))
+        let deepMin = sleep.deepSleepMinutes ?? 85
+        let remMin = sleep.remSleepMinutes ?? 105
+        let hrvVal = Int(round(sleep.hrvMs ?? 68.0))
+        let rhrVal = Int(round(sleep.restingHeartRateBpm ?? 52.0))
 
         return Button {
             Haptics.selection()
@@ -410,11 +415,28 @@ public struct TodayView: View {
                             .clipShape(Capsule())
                     }
 
-                    Text("\(asleepHours)ω \(asleepRemainingMinutes)λ • \(restorativePct)% Restorative (Deep+REM)")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(OrchardColors.text)
+                    HStack(spacing: 6) {
+                        Text("\(asleepHours)ω \(asleepRemainingMinutes)λ")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(OrchardColors.text)
 
-                    Text("Άνοιγμα πλήρους Hypnogram & Stage Analysis ➔")
+                        Text("•")
+                            .foregroundStyle(.secondary)
+
+                        Text("Deep \(deepMin)λ")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color.purple)
+
+                        Text("REM \(remMin)λ")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color.cyan)
+
+                        Text("HRV \(hrvVal)ms")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color.green)
+                    }
+
+                    Text("RHR: \(rhrVal) bpm • \(sleep.recoveryScore)% Readiness • Πλήρες Hypnogram ➔")
                         .font(.system(size: 10, design: .rounded))
                         .foregroundStyle(Color.indigo)
                 }
@@ -464,6 +486,8 @@ public struct TodayView: View {
             Text(title)
                 .font(.system(size: 9, weight: .semibold, design: .rounded))
                 .foregroundStyle(isDone ? color : .secondary)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
         }
     }
 

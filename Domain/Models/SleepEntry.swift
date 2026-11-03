@@ -13,6 +13,8 @@ public struct SleepEntry: Codable, Equatable, Sendable, Identifiable {
     public var coreSleepMinutes: Int?           // Core / light sleep
     public var awakeMinutes: Int?               // Awake time during night
     public var inBedMinutes: Int?               // Total time in bed
+    public var hrvMs: Double?                   // Heart Rate Variability (SDNN in milliseconds)
+    public var restingHeartRateBpm: Double?     // Resting Heart Rate (beats per minute)
 
     public init(
         id: UUID = UUID(),
@@ -25,7 +27,9 @@ public struct SleepEntry: Codable, Equatable, Sendable, Identifiable {
         remSleepMinutes: Int? = nil,
         coreSleepMinutes: Int? = nil,
         awakeMinutes: Int? = nil,
-        inBedMinutes: Int? = nil
+        inBedMinutes: Int? = nil,
+        hrvMs: Double? = nil,
+        restingHeartRateBpm: Double? = nil
     ) {
         self.id = id
         self.date = date
@@ -38,6 +42,8 @@ public struct SleepEntry: Codable, Equatable, Sendable, Identifiable {
         self.coreSleepMinutes = coreSleepMinutes
         self.awakeMinutes = awakeMinutes
         self.inBedMinutes = inBedMinutes
+        self.hrvMs = hrvMs
+        self.restingHeartRateBpm = restingHeartRateBpm
     }
 
     /// Sleep efficiency percentage (asleep time vs total in bed).
@@ -55,6 +61,8 @@ public struct SleepEntry: Codable, Equatable, Sendable, Identifiable {
     }
 
     /// Bevel / Whoop style Recovery Readiness Score (0...100).
+    /// Combines subjective rating, sleep efficiency, restorative sleep proportion (Deep + REM),
+    /// and Apple Watch HRV (Heart Rate Variability SDNN).
     public var recoveryScore: Int {
         var score: Double = Double(rating) * 12.0 // 12-60 base from subjective rating
         if let eff = efficiencyPercentage {
@@ -67,7 +75,44 @@ public struct SleepEntry: Codable, Equatable, Sendable, Identifiable {
         } else {
             score += 15.0
         }
+        // Athletic HRV Modulation:
+        // Baseline healthy HRV: 50-70 ms.
+        // Above 65 ms indicates parasympathetic dominance (high CNS readiness).
+        // Below 35 ms indicates sympathetic strain or residual fatigue.
+        if let hrv = hrvMs {
+            if hrv >= 65.0 {
+                score += 5.0
+            } else if hrv < 35.0 {
+                score -= 5.0
+            }
+        }
         return min(100, max(0, Int(score)))
+    }
+
+    /// Qualitative HRV readiness classification.
+    public var hrvStatusDescription: String {
+        guard let hrv = hrvMs else { return "Μη διαθέσιμη μέτρηση HRV" }
+        if hrv >= 65.0 {
+            return "Υψηλή Ετοιμότητα CNS (Παρασυμπαθητική Κυριαρχία)"
+        } else if hrv >= 45.0 {
+            return "Βέλτιστη Βασική Ετοιμότητα (Ισορροπημένο Νευρικό Σύστημα)"
+        } else if hrv >= 30.0 {
+            return "Μέτρια Ετοιμότητα (Ήπια Κόπωση)"
+        } else {
+            return "Αυξημένο Στρες / Κόπωση (Συμπαθητική Υπερφόρτωση)"
+        }
+    }
+
+    /// Qualitative Resting Heart Rate classification.
+    public var restingHeartRateStatusDescription: String {
+        guard let rhr = restingHeartRateBpm else { return "Μη διαθέσιμη μέτρηση RHR" }
+        if rhr <= 54.0 {
+            return "Εξαιρετική Αθλητική Ανάκαμψη"
+        } else if rhr <= 65.0 {
+            return "Φυσιολογικός Καρδιακός Ρυθμός Ηρεμίας"
+        } else {
+            return "Ελαφρώς Αυξημένος Ρυθμός (Πιθανή Ελλιπής Ανάρρωση)"
+        }
     }
 
     /// Sleep debt relative to an 8-hour target (in minutes, + = surplus, - = deficit).

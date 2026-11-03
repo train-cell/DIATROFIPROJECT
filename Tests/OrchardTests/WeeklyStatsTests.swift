@@ -142,7 +142,9 @@ final class WeeklyStatsTests: XCTestCase {
             remSleepMinutes: 120,      // 2h 00m
             coreSleepMinutes: 240,     // 4h 00m
             awakeMinutes: 20,          // 20m
-            inBedMinutes: 500          // 8h 20m
+            inBedMinutes: 500,         // 8h 20m
+            hrvMs: 72.0,               // 72 ms (High HRV)
+            restingHeartRateBpm: 49.0  // 49 bpm (Athletic RHR)
         )
 
         // Efficiency: 480 / 500 = 96%
@@ -154,8 +156,31 @@ final class WeeklyStatsTests: XCTestCase {
         // Debt relative to 480: 480 - 480 = 0
         XCTAssertEqual(sleep.sleepDebtMinutes, 0)
 
-        // Recovery score: 5 * 12 + (96 * 0.25) + min(20, 50 * 0.5) = 60 + 24 + 20 = 104 -> clamped to 100
+        // Recovery score: 5 * 12 + (96 * 0.25) + min(20, 50 * 0.5) + HRV bonus (5.0) = 60 + 24 + 20 + 5 = 109 -> clamped to 100
         XCTAssertEqual(sleep.recoveryScore, 100)
+
+        // HRV & RHR validation
+        XCTAssertEqual(sleep.hrvMs, 72.0)
+        XCTAssertEqual(sleep.restingHeartRateBpm, 49.0)
+        XCTAssertTrue(sleep.hrvStatusDescription.contains("Υψηλή Ετοιμότητα"))
+        XCTAssertTrue(sleep.restingHeartRateStatusDescription.contains("Αθλητική Ανάκαμψη"))
+
+        // Low HRV strain test
+        let strainedSleep = SleepEntry(
+            date: Date(),
+            rating: 3,
+            asleepMinutes: 360,
+            deepSleepMinutes: 40,
+            remSleepMinutes: 50,
+            coreSleepMinutes: 270,
+            awakeMinutes: 60,
+            inBedMinutes: 420,
+            hrvMs: 28.0,               // Low HRV (< 35 ms)
+            restingHeartRateBpm: 68.0
+        )
+        // 3 * 12 (36) + (360/420 * 100 * 0.25 = 21.4) + ((90/360)*100 * 0.5 = 12.5) - 5 (HRV penalty) = 64.9 -> 64
+        XCTAssertEqual(strainedSleep.recoveryScore, 64)
+        XCTAssertTrue(strainedSleep.hrvStatusDescription.contains("Αυξημένο Στρες"))
     }
 
     #if canImport(OrchardServices)
@@ -170,7 +195,9 @@ final class WeeklyStatsTests: XCTestCase {
             remSleepMinutes: 100,
             coreSleepMinutes: 260,
             awakeMinutes: 30,
-            inBedMinutes: 480
+            inBedMinutes: 480,
+            hrvMs: 65.0,
+            restingHeartRateBpm: 51.0
         )
 
         await store.setMockSleepEntry(sampleSleep)
@@ -180,6 +207,8 @@ final class WeeklyStatsTests: XCTestCase {
         XCTAssertEqual(fetched?.asleepMinutes, 450)
         XCTAssertEqual(fetched?.deepSleepMinutes, 90)
         XCTAssertEqual(fetched?.remSleepMinutes, 100)
+        XCTAssertEqual(fetched?.hrvMs, 65.0)
+        XCTAssertEqual(fetched?.restingHeartRateBpm, 51.0)
     }
     #endif
 }

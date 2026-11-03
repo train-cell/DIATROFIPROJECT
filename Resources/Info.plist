@@ -33,7 +33,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>The DIAτροφή Project reads workout, energy burned, and sleep data to sync your meal timing and energy balance.</string>
+	<string>The DIAτροφή Project reads workout, energy burned, sleep architecture, HRV, and resting heart rate data to sync your meal timing, recovery readiness, and energy balance.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>The DIAτροφή Project logs dietary calories and macronutrients confirmed by you to Apple Health.</string>
 	<key>UILaunchScreen</key>

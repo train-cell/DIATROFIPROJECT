@@ -43,18 +43,18 @@ Benchmarked against the world's leading athletic nutrition and recovery platform
 
 | # | Feature | Platform Parity | Engine / Module | Capabilities |
 |---|---|---|---|---|
-| **1** | **Dynamic TDEE Expenditure Engine** | *MacroFactor* | [`ExpenditureEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/ExpenditureEngine.swift) | Ordinary Least Squares (OLS) regression over calendar dates & EMA trend weight to calculate true daily metabolic burn ($7,700\text{ kcal/kg}$). |
-| **2** | **Micronutrient & Electrolyte RDA Engine** | *Cronometer* | [`MicronutrientEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/MicronutrientEngine.swift) | Athletic RDA targets for Sodium (3,500mg), Potassium (3,800mg), Magnesium (450mg), Calcium, Fiber (38g), and a 0–100% electrolyte replenishment ring. |
-| **3** | **Smart Weekly Coaching Check-In** | *RP Diet Coach* | [`CoachingCheckInEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/CoachingCheckInEngine.swift) | Algorithmic coach checking compliance (>75%), preserving protein at $2.2\text{ g/kg}$, and shifting carbs (70%) and fats (30%) dynamically. |
-| **4** | **Intermittent Fasting & Circadian Clock** | *Zero / YAZIO* | [`FastingEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/FastingEngine.swift) | Real-time biological stages: Digestion (0–4h) ➔ Fat Burning (4–12h) ➔ Ketosis & AMPK (12–16h) ➔ Autophagy (16h+). |
-| **5** | **Multi-Goal Habit & Adherence Streak Rings** | *Streaks / Carbon* | [`HabitStreakEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/HabitStreakEngine.swift) | 4 athletic rings: Nutrition, 4.0L Water, Sleep (>=7h / score >=75), and Supplements with perfect-day streak tracking. |
-| **6** | **Staple Foods & Barcode Lookup Library** | *Cronometer / MFP* | [`StapleFoodLibrary.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/StapleFoodLibrary.swift) | Zero-latency offline bodybuilding pantry (chicken breast, egg whites, whey isolate, oats, cream of rice, salmon, EVOO) + barcode scanning. |
-| **7** | **Peri-Workout Anabolic Window Tracker** | *RP Diet Coach* | [`PeriWorkoutEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/PeriWorkoutEngine.swift) | Biphasic nutrient timing: Pre-workout fuel (60–90m), Intra-workout hydration, Immediate post-workout anabolic window (0–45m), and Solid meal. |
-| **8** | **Custom Recipe & Macro Combo Builder** | *MyFitnessPal* | [`RecipeBuilderEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/RecipeBuilderEngine.swift) | Combine pantry staples into custom recipes (e.g. "Power Proats"), compute aggregate & per-serving macros, and convert directly into scheduled plan items. |
-| **9** | **Satiety, Energy & GI Digestion Journal** | *Lifesum* | [`DigestiveTracker.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/DigestiveTracker.swift) | Postprandial tracking: Satiety score (1–5), Energy level (1–5 food coma to peak), GI symptoms (bloating, acid reflux, heavy stomach), and digestive wellness score. |
-| **10** | **Workout Strain vs Glycogen Fueling Score** | *Bevel / Whoop* | [`WorkoutFuelEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/WorkoutFuelEngine.swift) | Compares Apple Watch workout energy burn with peri-workout carbohydrate intake, estimating glycogen adequacy ($65\%$ expenditure ratio). |
-| **11** | **Goal Weight Projection & Deficit Curve** | *MacroFactor* | [`WeightProjectionEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/WeightProjectionEngine.swift) | Mathematical milestone timeline, target completion date, and ISSN safe rate-of-loss guardrail ($< 1.0\%$ bodyweight/week). |
-| **12** | **Deep Biometric & Coach Report Exporter** | *Cronometer Pro* | [`ReportExportEngine.swift`](file:///Users/john_ak/antigarvity/Orchard/Domain/ReportExportEngine.swift) | Generates standard RFC 4180 CSV tables and structured Greek briefings for athletic prep coaches with a single tap. |
+| **1** | **Dynamic TDEE Expenditure Engine** | *MacroFactor* | [`ExpenditureEngine.swift`](Domain/ExpenditureEngine.swift) | Ordinary Least Squares (OLS) regression over calendar dates & EMA trend weight to calculate true daily metabolic burn ($7,700\text{ kcal/kg}$). |
+| **2** | **Micronutrient & Electrolyte RDA Engine** | *Cronometer* | [`MicronutrientEngine.swift`](Domain/MicronutrientEngine.swift) | Athletic RDA targets for Sodium (3,500mg), Potassium (3,800mg), Magnesium (450mg), Calcium, Fiber (38g), and a 0–100% electrolyte replenishment ring. |
+| **3** | **Smart Weekly Coaching Check-In** | *RP Diet Coach* | [`CoachingCheckInEngine.swift`](Domain/CoachingCheckInEngine.swift) | Algorithmic coach checking compliance (>75%), preserving protein at $2.2\text{ g/kg}$, and shifting carbs (70%) and fats (30%) dynamically. |
+| **4** | **Intermittent Fasting & Circadian Clock** | *Zero / YAZIO* | [`FastingEngine.swift`](Domain/FastingEngine.swift) | Real-time biological stages: Digestion (0–4h) ➔ Fat Burning (4–12h) ➔ Ketosis & AMPK (12–16h) ➔ Autophagy (16h+). |
+| **5** | **Multi-Goal Habit & Adherence Streak Rings** | *Streaks / Carbon* | [`HabitStreakEngine.swift`](Domain/HabitStreakEngine.swift) | 4 athletic rings: Nutrition, 4.0L Water, Sleep (>=7h / score >=75), and Supplements with perfect-day streak tracking. |
+| **6** | **Staple Foods & Barcode Lookup Library** | *Cronometer / MFP* | [`StapleFoodLibrary.swift`](Domain/StapleFoodLibrary.swift) | Zero-latency offline bodybuilding pantry (chicken breast, egg whites, whey isolate, oats, cream of rice, salmon, EVOO) + barcode scanning. |
+| **7** | **Peri-Workout Anabolic Window Tracker** | *RP Diet Coach* | [`PeriWorkoutEngine.swift`](Domain/PeriWorkoutEngine.swift) | Biphasic nutrient timing: Pre-workout fuel (60–90m), Intra-workout hydration, Immediate post-workout anabolic window (0–45m), and Solid meal. |
+| **8** | **Custom Recipe & Macro Combo Builder** | *MyFitnessPal* | [`RecipeBuilderEngine.swift`](Domain/RecipeBuilderEngine.swift) | Combine pantry staples into custom recipes (e.g. "Power Proats"), compute aggregate & per-serving macros, and convert directly into scheduled plan items. |
+| **9** | **Satiety, Energy & GI Digestion Journal** | *Lifesum* | [`DigestiveTracker.swift`](Domain/DigestiveTracker.swift) | Postprandial tracking: Satiety score (1–5), Energy level (1–5 food coma to peak), GI symptoms (bloating, acid reflux, heavy stomach), and digestive wellness score. |
+| **10** | **Workout Strain vs Glycogen Fueling Score** | *Bevel / Whoop* | [`WorkoutFuelEngine.swift`](Domain/WorkoutFuelEngine.swift) | Compares Apple Watch workout energy burn with peri-workout carbohydrate intake, estimating glycogen adequacy ($65\%$ expenditure ratio). |
+| **11** | **Goal Weight Projection & Deficit Curve** | *MacroFactor* | [`WeightProjectionEngine.swift`](Domain/WeightProjectionEngine.swift) | Mathematical milestone timeline, target completion date, and ISSN safe rate-of-loss guardrail ($< 1.0\%$ bodyweight/week). |
+| **12** | **Deep Biometric & Coach Report Exporter** | *Cronometer Pro* | [`ReportExportEngine.swift`](Domain/ReportExportEngine.swift) | Generates standard RFC 4180 CSV tables and structured Greek briefings for athletic prep coaches with a single tap. |
 
 ---
 
@@ -139,14 +139,17 @@ flowchart TD
 * **Preferred Starting Model:** Users can select any model (e.g. `gemini-3.7-flash` or `gemini-2.5-pro`) as their preferred primary in Settings, keeping the remaining 11 models as an automatic safety net.
 * **Built-in Latency Diagnostic:** Real-time ping test in Settings reporting connection health, latency in ms, and fallback detection.
 
-### 😴 AutoSleep & Bevel Recovery Architecture
-* **Apple Watch Ultra 3 Integration:** Queries `HKCategoryTypeIdentifier.sleepAnalysis` samples across the night.
+### 😴 AutoSleep & Bevel Recovery Architecture (HealthKit + HRV + RHR)
+* **Apple Watch Ultra 3 Integration:** Queries `HKCategoryTypeIdentifier.sleepAnalysis` samples, `HKQuantityTypeIdentifier.heartRateVariabilitySDNN`, and `HKQuantityTypeIdentifier.restingHeartRate` across the overnight sleep window.
 * **Stage Segmentation:** Automatically calculates duration and percentages for:
   * **Deep Sleep** (Physical tissue restoration & growth hormone)
   * **REM Sleep** (Cognitive consolidation & mental recovery)
   * **Core / Light Sleep**
   * **Awake Periods**
-* **Readiness & Debt Scoring:** Computes a composite **0–100 Recovery Score** based on restorative sleep percentage (Deep + REM), total sleep duration against the 8.0-hour baseline, and cumulative sleep debt.
+* **Autonomic Nervous System (ANS) & HRV Tracking:**
+  * **Heart Rate Variability (SDNN in ms):** Evaluates parasympathetic tone. High HRV ($\ge 65\text{ ms}$) signals high CNS readiness and boosts the daily recovery score.
+  * **Resting Heart Rate (RHR in bpm):** Real-time nocturnal cardiac baseline reflecting autonomic stress and cardiovascular recuperation.
+  * **Readiness & Debt Scoring:** Computes a composite **0–100 Recovery Score** based on restorative sleep percentage (Deep + REM), sleep efficiency, nocturnal HRV, and cumulative sleep debt against an 8-hour athletic baseline.
 
 ### 💊 Athletic Supplement Stacking & Zero-Calorie Flavoring
 One-tap rapid logging configured for serious athletic performance:

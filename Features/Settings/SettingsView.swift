@@ -35,7 +35,7 @@ public struct SettingsView: View {
     // AI Assistant
     @AppStorage("orchard_ai_enabled") private var aiEnabled: Bool = true
     @AppStorage("orchard_ai_provider") private var selectedAIProvider: String = "gemini"
-    @AppStorage("orchard_ai_api_key") private var apiKey: String = ""
+    @State private var apiKey: String = ""
     @AppStorage("orchard_gemini_preferred_model") private var preferredGeminiModel: String = "auto"
     @State private var showApiKeySavedToast: Bool = false
     @State private var isTestingGeminiConnection: Bool = false
@@ -83,6 +83,10 @@ public struct SettingsView: View {
             }
             .task {
                 await loadTelemetryStats()
+                if let savedKey = KeychainStore.shared.getAPIKey() {
+                    apiKey = savedKey
+                }
+                UserDefaults.standard.removeObject(forKey: "orchard_ai_api_key")
             }
         }
     }

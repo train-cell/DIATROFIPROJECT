@@ -286,6 +286,8 @@ public final class HealthKitStore: HealthStoreProtocol, @unchecked Sendable {
         }
 
         let workoutType = HKObjectType.workoutType()
+        let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN)
+        let restingHeartRateType = HKQuantityType.quantityType(forIdentifier: .restingHeartRate)
 
         // Write types: Dietary nutrition only.
         // NOTE: Orchard NEVER writes activeEnergyBurned. This prevents double-counting Apple Watch activity.
@@ -296,13 +298,15 @@ public final class HealthKitStore: HealthStoreProtocol, @unchecked Sendable {
             fatType
         ]
 
-        // Read types: Workouts, burned energy, and sleep analysis.
-        let typesToRead: Set<HKObjectType> = [
+        // Read types: Workouts, burned energy, sleep analysis, HRV, and resting heart rate.
+        var typesToRead: Set<HKObjectType> = [
             workoutType,
             activeEnergyType,
             basalEnergyType,
             sleepType
         ]
+        if let hrvType = hrvType { typesToRead.insert(hrvType) }
+        if let restingHeartRateType = restingHeartRateType { typesToRead.insert(restingHeartRateType) }
 
         return try await withCheckedThrowingContinuation { continuation in
             healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead) { success, error in
@@ -389,7 +393,92 @@ public final class HealthKitStore: HealthStoreProtocol, @unchecked Sendable {
             return nil
         }
 
-        let predicate = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: .strictStartDate)
+        async let samplesTask = querySleepSamples(sleepType: sleepType, start: windowStart, end: windowEnd)
+        async let hrvTask = queryLatestSampleValue(
+            for: .heartRateVariabilitySDNN,
+            unit: HKUnit.secondUnit(with: .milli),
+            start: windowStart,
+            end: windowEnd
+        )
+        async let rhrTask = queryLatestSampleValue(
+            for: .restingHeartRate,
+            unit: HKUnit.count().unitDivided(by: .minute()),
+            start: windowStart,
+            end: windowEnd
+        )
+
+        let (categorySamples, hrvVal, rhrVal) = try await (samplesTask, hrvTask, rhrTask)
+        guard !categorySamples.isEmpty else {
+            return nil
+        }
+
+        var deepSeconds: TimeInterval = 0
+        var remSeconds: TimeInterval = 0
+        var coreSeconds: TimeInterval = 0
+        var awakeSeconds: TimeInterval = 0
+        var inBedSeconds: TimeInterval = 0
+        var totalAsleepSeconds: TimeInterval = 0
+
+        for sample in categorySamples {
+            let duration = sample.endDate.timeIntervalSince(sample.startDate)
+            guard duration > 0 else { continue }
+
+            switch sample.value {
+            case HKCategoryValueSleepAnalysis.asleepDeep.rawValue:
+                deepSeconds += duration
+                totalAsleepSeconds += duration
+            case HKCategoryValueSleepAnalysis.asleepREM.rawValue:
+                remSeconds += duration
+                totalAsleepSeconds += duration
+            case HKCategoryValueSleepAnalysis.asleepCore.rawValue:
+                coreSeconds += duration
+                totalAsleepSeconds += duration
+            case HKCategoryValueSleepAnalysis.awake.rawValue:
+                awakeSeconds += duration
+            case HKCategoryValueSleepAnalysis.inBed.rawValue:
+                inBedSeconds += duration
+            default:
+                if sample.value == HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue {
+                    totalAsleepSeconds += duration
+                    coreSeconds += duration
+                }
+            }
+        }
+
+        if inBedSeconds == 0 {
+            inBedSeconds = totalAsleepSeconds + awakeSeconds
+        }
+
+        let deepMin = Int(deepSeconds / 60.0)
+        let remMin = Int(remSeconds / 60.0)
+        let coreMin = Int(coreSeconds / 60.0)
+        let awakeMin = Int(awakeSeconds / 60.0)
+        let inBedMin = Int(inBedSeconds / 60.0)
+        let asleepMin = Int(totalAsleepSeconds / 60.0)
+
+        let entry = SleepEntry(
+            date: date,
+            rating: 4,
+            tags: [],
+            asleepMinutes: asleepMin,
+            deepSleepMinutes: deepMin,
+            remSleepMinutes: remMin,
+            coreSleepMinutes: coreMin,
+            awakeMinutes: awakeMin,
+            inBedMinutes: inBedMin,
+            hrvMs: hrvVal,
+            restingHeartRateBpm: rhrVal
+        )
+
+        return entry
+    }
+
+    private func querySleepSamples(
+        sleepType: HKCategoryType,
+        start: Date,
+        end: Date
+    ) async throws -> [HKCategorySample] {
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -403,69 +492,36 @@ public final class HealthKitStore: HealthStoreProtocol, @unchecked Sendable {
                     continuation.resume(throwing: error)
                     return
                 }
+                continuation.resume(returning: (samples as? [HKCategorySample]) ?? [])
+            }
+            healthStore.execute(query)
+        }
+    }
 
-                guard let categorySamples = samples as? [HKCategorySample], !categorySamples.isEmpty else {
+    private func queryLatestSampleValue(
+        for identifier: HKQuantityTypeIdentifier,
+        unit: HKUnit,
+        start: Date,
+        end: Date
+    ) async -> Double? {
+        guard let quantityType = HKQuantityType.quantityType(forIdentifier: identifier) else {
+            return nil
+        }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: quantityType,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, _ in
+                guard let sample = samples?.first as? HKQuantitySample else {
                     continuation.resume(returning: nil)
                     return
                 }
-
-                var deepSeconds: TimeInterval = 0
-                var remSeconds: TimeInterval = 0
-                var coreSeconds: TimeInterval = 0
-                var awakeSeconds: TimeInterval = 0
-                var inBedSeconds: TimeInterval = 0
-                var totalAsleepSeconds: TimeInterval = 0
-
-                for sample in categorySamples {
-                    let duration = sample.endDate.timeIntervalSince(sample.startDate)
-                    guard duration > 0 else { continue }
-
-                    switch sample.value {
-                    case HKCategoryValueSleepAnalysis.asleepDeep.rawValue:
-                        deepSeconds += duration
-                        totalAsleepSeconds += duration
-                    case HKCategoryValueSleepAnalysis.asleepREM.rawValue:
-                        remSeconds += duration
-                        totalAsleepSeconds += duration
-                    case HKCategoryValueSleepAnalysis.asleepCore.rawValue:
-                        coreSeconds += duration
-                        totalAsleepSeconds += duration
-                    case HKCategoryValueSleepAnalysis.awake.rawValue:
-                        awakeSeconds += duration
-                    case HKCategoryValueSleepAnalysis.inBed.rawValue:
-                        inBedSeconds += duration
-                    default:
-                        if sample.value == HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue {
-                            totalAsleepSeconds += duration
-                            coreSeconds += duration
-                        }
-                    }
-                }
-
-                if inBedSeconds == 0 {
-                    inBedSeconds = totalAsleepSeconds + awakeSeconds
-                }
-
-                let deepMin = Int(deepSeconds / 60.0)
-                let remMin = Int(remSeconds / 60.0)
-                let coreMin = Int(coreSeconds / 60.0)
-                let awakeMin = Int(awakeSeconds / 60.0)
-                let inBedMin = Int(inBedSeconds / 60.0)
-                let asleepMin = Int(totalAsleepSeconds / 60.0)
-
-                let entry = SleepEntry(
-                    date: date,
-                    rating: 4,
-                    tags: [],
-                    asleepMinutes: asleepMin,
-                    deepSleepMinutes: deepMin,
-                    remSleepMinutes: remMin,
-                    coreSleepMinutes: coreMin,
-                    awakeMinutes: awakeMin,
-                    inBedMinutes: inBedMin
-                )
-
-                continuation.resume(returning: entry)
+                continuation.resume(returning: sample.quantity.doubleValue(for: unit))
             }
             healthStore.execute(query)
         }

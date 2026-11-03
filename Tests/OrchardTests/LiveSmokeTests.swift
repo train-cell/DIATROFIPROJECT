@@ -459,7 +459,9 @@ final class LiveSmokeTests: XCTestCase {
             remSleepMinutes: 110,
             coreSleepMinutes: 250,
             awakeMinutes: 30,
-            inBedMinutes: 480
+            inBedMinutes: 480,
+            hrvMs: 68.0,
+            restingHeartRateBpm: 52.0
         )
 
         // Efficiency
@@ -473,8 +475,14 @@ final class LiveSmokeTests: XCTestCase {
         // Sleep debt
         XCTAssertEqual(sleep.sleepDebtMinutes, -30)
 
-        // Recovery score: 5 * 12 (60) + (93.75 * 0.25 = 23.4) + min(20, 44.44 * 0.5 = 20.0) = 103 -> clamped to 100
+        // Recovery score: 5 * 12 (60) + (93.75 * 0.25 = 23.4) + min(20, 44.44 * 0.5 = 20.0) + HRV bonus (5.0) = 108 -> clamped to 100
         XCTAssertEqual(sleep.recoveryScore, 100)
+
+        // Biometrics
+        XCTAssertEqual(sleep.hrvMs, 68.0)
+        XCTAssertEqual(sleep.restingHeartRateBpm, 52.0)
+        XCTAssertTrue(sleep.hrvStatusDescription.contains("Υψηλή Ετοιμότητα"))
+        XCTAssertTrue(sleep.restingHeartRateStatusDescription.contains("Αθλητική Ανάκαμψη"))
 
         // Simulate a restless night: rating 2, 330 min asleep, 30m deep, 40m REM, 90m awake, 420m in bed
         let restlessSleep = SleepEntry(
@@ -486,7 +494,9 @@ final class LiveSmokeTests: XCTestCase {
             remSleepMinutes: 40,
             coreSleepMinutes: 260,
             awakeMinutes: 90,
-            inBedMinutes: 420
+            inBedMinutes: 420,
+            hrvMs: 25.0,
+            restingHeartRateBpm: 72.0
         )
 
         // Restless efficiency: 330 / 420 = 78.57%
@@ -500,8 +510,9 @@ final class LiveSmokeTests: XCTestCase {
         // Restless debt: 330 - 480 = -150 minutes deficit
         XCTAssertEqual(restlessSleep.sleepDebtMinutes, -150)
 
-        // Recovery score: 2 * 12 (24) + (78.57 * 0.25 = 19.6) + (21.21 * 0.5 = 10.6) = 54 (low readiness)
-        XCTAssertEqual(restlessSleep.recoveryScore, 54)
+        // Recovery score: 2 * 12 (24) + (78.57 * 0.25 = 19.6) + (21.21 * 0.5 = 10.6) - 5 (low HRV) = 49 (low readiness)
+        XCTAssertEqual(restlessSleep.recoveryScore, 49)
+        XCTAssertTrue(restlessSleep.hrvStatusDescription.contains("Αυξημένο Στρες"))
 
         // Test HealthStore integration
         let store = FakeHealthStore()
@@ -510,6 +521,8 @@ final class LiveSmokeTests: XCTestCase {
         XCTAssertNotNil(retrieved)
         XCTAssertEqual(retrieved?.deepSleepMinutes, 90)
         XCTAssertEqual(retrieved?.recoveryScore, 100)
+        XCTAssertEqual(retrieved?.hrvMs, 68.0)
+        XCTAssertEqual(retrieved?.restingHeartRateBpm, 52.0)
     }
 
     // MARK: - Scenario 7: Athletic Supplements & Zero-Mock Gemini BYOK Router Pipeline

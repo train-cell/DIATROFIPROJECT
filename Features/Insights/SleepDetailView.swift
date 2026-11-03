@@ -37,7 +37,9 @@ public struct SleepDetailView: View {
             remSleepMinutes: 105,     // 1h 45m (24%)
             coreSleepMinutes: 255,    // 4h 15m (57%)
             awakeMinutes: 30,         // 30m
-            inBedMinutes: 475         // 7h 55m
+            inBedMinutes: 475,        // 7h 55m
+            hrvMs: 68.0,              // 68 ms (Apple Watch Ultra SDNN)
+            restingHeartRateBpm: 52.0 // 52 bpm
         )
     }
 
@@ -51,13 +53,16 @@ public struct SleepDetailView: View {
                     // 2. Apple Watch Ultra 3 Sync Badge
                     watchSyncBadge
 
-                    // 3. Sleep Architecture Hypnogram (AutoSleep / Apple Sleep)
+                    // 3. Biometric Autonomic Nervous System & HRV Section
+                    hrvAndRestingHeartRateSection
+
+                    // 4. Sleep Architecture Hypnogram (AutoSleep / Apple Sleep)
                     hypnogramSection
 
-                    // 4. Metric Tiles Grid (Efficiency, Restorative, Debt)
+                    // 5. Metric Tiles Grid (Efficiency, Restorative, Debt)
                     metricsGridSection
 
-                    // 5. Subjective Rating & Morning Tags
+                    // 6. Subjective Rating & Morning Tags
                     subjectiveRatingSection
                 }
                 .padding(.horizontal, 18)
@@ -154,7 +159,105 @@ public struct SleepDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    // MARK: - 3. Hypnogram Section (AutoSleep Stages)
+    // MARK: - 3. Biometric Autonomic Nervous System & HRV Section
+    private var hrvAndRestingHeartRateSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Label("Αυτόνομο Νευρικό Σύστημα & HRV", systemImage: "waveform.path.ecg")
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundStyle(OrchardColors.text)
+
+                Spacer()
+
+                Text("Apple HealthKit")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 12) {
+                // HRV Card
+                let hrvVal = Int(round(activeEntry.hrvMs ?? 68.0))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "bolt.heart.fill")
+                            .foregroundStyle(Color.green)
+                            .font(.system(size: 16))
+                        Spacer()
+                        Text("SDNN")
+                            .font(.system(size: 10, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Text("\(hrvVal) ms")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+
+                    Text("HRV Ετοιμότητα")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    Text(activeEntry.hrvStatusDescription)
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(hrvVal >= 60 ? Color.green : Color.orange)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color.green.opacity(0.18), lineWidth: 1)
+                        )
+                )
+
+                // Resting Heart Rate Card
+                let rhrVal = Int(round(activeEntry.restingHeartRateBpm ?? 52.0))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "heart.fill")
+                            .foregroundStyle(OrchardColors.appleRed)
+                            .font(.system(size: 16))
+                        Spacer()
+                        Text("RHR")
+                            .font(.system(size: 10, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Text("\(rhrVal) bpm")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+
+                    Text("Σφυγμοί Ηρεμίας")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    Text(activeEntry.restingHeartRateStatusDescription)
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundStyle(rhrVal <= 55 ? Color.cyan : Color.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(OrchardColors.appleRed.opacity(0.18), lineWidth: 1)
+                        )
+                )
+            }
+        }
+        .padding(18)
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    // MARK: - 4. Hypnogram Section (AutoSleep Stages)
     private var hypnogramSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
