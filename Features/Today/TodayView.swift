@@ -393,6 +393,7 @@ public struct TodayView: View {
                         )
                         .rotationEffect(.degrees(-90))
                         .frame(width: 54, height: 54)
+                        .animation(.spring(response: 0.55, dampingFraction: 0.75), value: sleep.recoveryScore)
 
                     Text("\(sleep.recoveryScore)%")
                         .font(.system(size: 14, weight: .bold, design: .rounded))
@@ -439,6 +440,8 @@ public struct TodayView: View {
                     Text("RHR: \(rhrVal) bpm • \(sleep.recoveryScore)% Readiness • Πλήρες Hypnogram ➔")
                         .font(.system(size: 10, design: .rounded))
                         .foregroundStyle(Color.indigo)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
 
                 Spacer()
@@ -453,36 +456,49 @@ public struct TodayView: View {
     // MARK: - Habit Streaks & 4-Rings Pill
     private var habitStreakPillSection: some View {
         let streaks = container.habitStreaks
-        return HStack(spacing: 12) {
-            HStack(spacing: 6) {
+        return HStack(spacing: 8) {
+            HStack(spacing: 5) {
                 Text("🔥")
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
                 Text("\(streaks.currentStreakDays) ΗΜΕΡΕΣ STREAK")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .font(.system(size: 9.5, weight: .bold, design: .rounded))
                     .foregroundStyle(.orange)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 9)
             .padding(.vertical, 5)
             .background(Color.orange.opacity(0.12))
             .clipShape(Capsule())
 
-            Spacer()
+            Spacer(minLength: 4)
 
-            HStack(spacing: 8) {
-                habitDot(title: "Διατροφή", isDone: container.appleProgress.progressFraction >= 0.75, color: .green)
-                habitDot(title: "4L Νερό", isDone: container.waterIntakeMl >= container.targetWaterMl, color: .cyan)
-                habitDot(title: "Ύπνος", isDone: (container.sleepEntries.first?.recoveryScore ?? 85) >= 75, color: .indigo)
-                habitDot(title: "Supps", isDone: true, color: .purple)
+            HStack(spacing: 6) {
+                habitRing(title: "Διατροφή", isDone: container.appleProgress.progressFraction >= 0.75, color: .green)
+                habitRing(title: "4L Νερό", isDone: container.waterIntakeMl >= container.targetWaterMl, color: .cyan)
+                habitRing(title: "Ύπνος", isDone: (container.sleepEntries.first?.recoveryScore ?? 85) >= 75, color: .indigo)
+                habitRing(title: "Supps", isDone: true, color: .purple)
             }
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 2)
     }
 
-    private func habitDot(title: String, isDone: Bool, color: Color) -> some View {
+    private func habitRing(title: String, isDone: Bool, color: Color) -> some View {
         HStack(spacing: 3) {
-            Circle()
-                .fill(isDone ? color : Color.secondary.opacity(0.3))
-                .frame(width: 7, height: 7)
+            ZStack {
+                Circle()
+                    .stroke(color.opacity(0.25), lineWidth: 2)
+                    .frame(width: 9, height: 9)
+                if isDone {
+                    Circle()
+                        .trim(from: 0.0, to: 1.0)
+                        .stroke(color, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                        .frame(width: 9, height: 9)
+                    Circle()
+                        .fill(color)
+                        .frame(width: 4, height: 4)
+                }
+            }
             Text(title)
                 .font(.system(size: 9, weight: .semibold, design: .rounded))
                 .foregroundStyle(isDone ? color : .secondary)
@@ -538,6 +554,7 @@ public struct TodayView: View {
                         Capsule()
                             .fill(LinearGradient(colors: [Color.purple, Color.indigo], startPoint: .leading, endPoint: .trailing))
                             .frame(width: geo.size.width * CGFloat(fasting.progressFraction), height: 4)
+                            .animation(.spring(response: 0.45, dampingFraction: 0.75), value: fasting.progressFraction)
                     }
                 }
                 .frame(height: 4)
