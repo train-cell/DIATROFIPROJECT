@@ -29,7 +29,10 @@ public final class LLMRouter: @unchecked Sendable {
         if let explicit = isEnabledOverride {
             return explicit
         }
-        // Defaults to true unless explicitly disabled in UserDefaults
+        // Defaults to true unless explicitly disabled in UserDefaults (SettingsView or legacy)
+        if UserDefaults.standard.object(forKey: "orchard_ai_enabled") != nil {
+            return UserDefaults.standard.bool(forKey: "orchard_ai_enabled")
+        }
         if UserDefaults.standard.object(forKey: "orchard.ai.is_enabled") != nil {
             return UserDefaults.standard.bool(forKey: "orchard.ai.is_enabled")
         }

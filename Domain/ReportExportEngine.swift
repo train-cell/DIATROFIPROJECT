@@ -74,7 +74,11 @@ public enum ReportExportEngine {
     }
 
     /// Generates structured Greek briefing text for athletic prep coaches.
-    public static func generateCoachSummary(athleteName: String = "John Akrivos", records: [DailyReportRecord]) -> String {
+    public static func generateCoachSummary(
+        athleteName: String = "John Akrivos",
+        records: [DailyReportRecord],
+        targetWaterMl: Double = 3000.0
+    ) -> String {
         guard !records.isEmpty else { return "Δεν υπάρχουν καταγεγραμμένα δεδομένα για εξαγωγή." }
 
         let count = Double(records.count)
@@ -94,7 +98,7 @@ public enum ReportExportEngine {
         1. ΜΕΣΟΙ ΟΡΟΙ ΔΙΑΤΡΟΦΗΣ & ΜΑΚΡΟΣΥΣΤΑΤΙΚΩΝ:
         • Μέση Ημερήσια Πρόσληψη: \(Int(round(avgKcalIn))) kcal
         • Μέση Πρωτεΐνη: \(String(format: "%.1f", avgProtein)) g / ημέρα
-        • Μέση Ενυδάτωση: \(Int(round(avgWater))) ml / 4000 ml
+        • Μέση Ενυδάτωση: \(Int(round(avgWater))) ml / \(Int(round(targetWaterMl))) ml
         • Συνολική Συμμόρφωση Γευμάτων: \(Int(round(avgAdherence)))%
 
         2. ΑΝΑΡΡΩΣΗ & ΥΠΝΟΣ:

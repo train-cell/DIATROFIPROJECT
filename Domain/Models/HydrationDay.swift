@@ -1,6 +1,6 @@
 import Foundation
 
-/// Daily water hydration tracking model configured for the high-adherence 4.0 Liters/day (4000 ml) target.
+/// Daily water hydration tracking model configured for the athletic 3.0 Liters/day (3000 ml) target.
 public struct HydrationDay: Codable, Equatable, Sendable, Identifiable {
     public var id: UUID
     public var date: Date
@@ -10,7 +10,7 @@ public struct HydrationDay: Codable, Equatable, Sendable, Identifiable {
     public init(
         id: UUID = UUID(),
         date: Date = Date(),
-        targetMl: Double = 4000.0,
+        targetMl: Double = 3000.0,
         consumedMl: Double = 0.0
     ) {
         self.id = id
@@ -30,12 +30,12 @@ public struct HydrationDay: Codable, Equatable, Sendable, Identifiable {
         Int(round(progressFraction * 100.0))
     }
 
-    /// Remaining milliliters required to reach the 4.0L target.
+    /// Remaining milliliters required to reach the target.
     public var remainingMl: Double {
         max(0.0, targetMl - consumedMl)
     }
 
-    /// Whether the user has achieved the daily 4.0 Liters goal.
+    /// Whether the user has achieved the daily water goal.
     public var isGoalReached: Bool {
         consumedMl >= targetMl
     }

@@ -184,23 +184,28 @@ final class PlanModelTests: XCTestCase {
         guard FileManager.default.fileExists(atPath: realPlanUrl.path) else { return }
 
         let plan = try PlanLoader.loadPlan(from: realPlanUrl)
-        XCTAssertEqual(plan.templates.count, 7, "User 7-day cyclical plan must contain exactly 7 templates")
-        XCTAssertNotNil(plan.templates["day_1"])
-        XCTAssertNotNil(plan.templates["day_7"])
+        XCTAssertEqual(plan.version, 2, "Real plan.json must be version 2")
+        XCTAssertEqual(plan.settings.wake, "10:30")
+        XCTAssertEqual(plan.settings.bed, "23:30")
+        XCTAssertEqual(plan.settings.minMealGapMinutes, 60)
+        XCTAssertEqual(plan.settings.targetWaterMl, 3000.0)
+        XCTAssertEqual(plan.settings.minWaterMl, 2500.0)
+        XCTAssertEqual(plan.settings.sport, "Τεχνική Κολύμβηση")
+        XCTAssertEqual(plan.settings.planLabel, "Πρόγραμμα #1 (11.11.26)")
 
-        let calendar = Calendar(identifier: .gregorian)
-        let now = Date()
-
-        // Verify schedule resolution for all 7 days
-        for dayIndex in 1...7 {
-            let templateName = "day_\(dayIndex)"
-            let events = ScheduleResolver.resolve(date: now, plan: plan, selectedTemplateName: templateName, calendar: calendar)
-            XCTAssertFalse(events.isEmpty, "Template \(templateName) must produce events")
-            XCTAssertTrue(events.count >= 5, "Template \(templateName) should have at least 5 meals/slots")
+        // Verify the 5 templates
+        XCTAssertEqual(plan.templates.count, 5, "Nutrition protocol plan must contain exactly 5 templates")
+        let expectedTemplateKeys = ["training", "double_training", "pre_race", "race_day", "rest"]
+        for key in expectedTemplateKeys {
+            XCTAssertNotNil(plan.templates[key], "Template '\(key)' must be present")
         }
+
+        // Structural validation via PlanDraftValidator
+        let validationResult = PlanDraftValidator.validate(plan: plan)
+        XCTAssertEqual(validationResult, .valid, "Real plan.json must pass PlanDraftValidator without errors")
     }
 
-    func testRealPlanAllSevenDaysNutritionAndDay7SpecialLayout() throws {
+    func testRealPlanTemplatesResolutionAndNutritionProtocol() throws {
         let testFileUrl = URL(fileURLWithPath: #filePath)
         let rootDir = testFileUrl.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let realPlanUrl = rootDir.appendingPathComponent("plan.json")
@@ -208,106 +213,60 @@ final class PlanModelTests: XCTestCase {
 
         let plan = try PlanLoader.loadPlan(from: realPlanUrl)
 
-        // 1. Structural validation via PlanDraftValidator
-        let validationResult = PlanDraftValidator.validate(plan: plan)
-        XCTAssertEqual(validationResult, .valid, "Real plan.json must pass PlanDraftValidator without errors")
-
-        // 2. Calorie totals across all 7 days
-        let expectedDailyKcal: [String: Double] = [
-            "day_1": 1820.0,
-            "day_2": 1770.0,
-            "day_3": 2000.0,
-            "day_4": 1840.0,
-            "day_5": 1960.0,
-            "day_6": 1720.0,
-            "day_7": 2000.0
-        ]
-
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
-        let baseDate = calendar.date(from: DateComponents(year: 2026, month: 11, day: 2, hour: 8, minute: 0))!
 
-        for (dayKey, expectedKcal) in expectedDailyKcal {
-            guard let template = plan.templates[dayKey] else {
-                XCTFail("Missing template \(dayKey)")
-                continue
-            }
+        // Monday (2026-11-02) -> training
+        let monday = calendar.date(from: DateComponents(year: 2026, month: 11, day: 2, hour: 10, minute: 30))!
+        let trainingEvents = ScheduleResolver.resolve(date: monday, plan: plan, calendar: calendar)
 
-            // CalorieEngine calculation
-            let plannedKcal = CalorieEngine.plannedDayKcal(template: template)
-            XCTAssertEqual(plannedKcal, expectedKcal, "Calorie mismatch for \(dayKey): expected \(expectedKcal), got \(plannedKcal)")
+        // On Monday, FERRO SANOL is NOT scheduled (active only wed, fri)
+        XCTAssertFalse(trainingEvents.contains { $0.itemId == "ferro_sanol" })
+        XCTAssertTrue(trainingEvents.contains { $0.itemId == "vit_c" })
+        XCTAssertTrue(trainingEvents.contains { $0.itemId == "bf_fuel" })
+        XCTAssertTrue(trainingEvents.contains { $0.itemId == "v2000" })
+        XCTAssertTrue(trainingEvents.contains { $0.itemId == "sandwich" })
+        XCTAssertTrue(trainingEvents.contains { $0.itemId == "tupper1" })
+        XCTAssertTrue(trainingEvents.contains { $0.itemId == "main_meal" })
+        XCTAssertTrue(trainingEvents.contains { $0.itemId == "garnish" })
 
-            // Anchor math and schedule resolution
-            let events = ScheduleResolver.resolve(date: baseDate, plan: plan, selectedTemplateName: dayKey, calendar: calendar)
-            XCTAssertEqual(events.count, template.items.count, "All items in \(dayKey) must resolve to events")
+        // Check sandwich at 12:00 (afterWake 90 from 10:30)
+        let sandwich = try XCTUnwrap(trainingEvents.first { $0.itemId == "sandwich" })
+        XCTAssertEqual(calendar.component(.hour, from: sandwich.resolvedTime), 12)
+        XCTAssertEqual(calendar.component(.minute, from: sandwich.resolvedTime), 0)
 
-            for event in events {
-                XCTAssertFalse(event.hasConflict, "Event \(event.itemId) in \(dayKey) should not have conflicts, but got: \(event.conflictReason ?? "")")
-            }
+        // Check tupper1 at 13:30 (afterWake 180 from 10:30)
+        let tupper = try XCTUnwrap(trainingEvents.first { $0.itemId == "tupper1" })
+        XCTAssertEqual(calendar.component(.hour, from: tupper.resolvedTime), 13)
+        XCTAssertEqual(calendar.component(.minute, from: tupper.resolvedTime), 30)
 
-            // Verify days 1-6 contain rice cakes snack (ρυζογκοφρέτες)
-            if dayKey != "day_7" {
-                let hasRiceCakes = template.items.contains { $0.title.contains("ρυζογκοφρέτες") }
-                XCTAssertTrue(hasRiceCakes, "\(dayKey) should include midday rice cakes snack")
-            }
-        }
+        // Wednesday (2026-11-04) -> training with FERRO SANOL included
+        let wednesday = calendar.date(from: DateComponents(year: 2026, month: 11, day: 4, hour: 10, minute: 30))!
+        let wedEvents = ScheduleResolver.resolve(date: wednesday, plan: plan, calendar: calendar)
+        XCTAssertTrue(wedEvents.contains { $0.itemId == "ferro_sanol" }, "Wednesday must include FERRO SANOL")
 
-        // 3. Day 7 Special Layout In-Depth Verification
-        let day7 = try XCTUnwrap(plan.templates["day_7"])
-        XCTAssertEqual(day7.items.count, 5, "Day 7 has 5 items layout")
+        // Sunday (2026-11-08) -> rest
+        let sunday = calendar.date(from: DateComponents(year: 2026, month: 11, day: 8, hour: 10, minute: 30))!
+        XCTAssertEqual(plan.templateKey(for: sunday, calendar: calendar), "rest")
+        let restEvents = ScheduleResolver.resolve(date: sunday, plan: plan, calendar: calendar)
+        XCTAssertFalse(restEvents.isEmpty)
 
-        // Day 7 training session: 12:30, 75 min -> ends at 13:45
-        let training = try XCTUnwrap(day7.trainingSessions.first)
-        XCTAssertEqual(training.start, "12:30")
-        XCTAssertEqual(training.durationMinutes, 75)
-        XCTAssertEqual(training.estKcal, 550)
+        // Verify options count on key meals in training template
+        let trainingTemplate = plan.templates["training"]!
+        let bfItem = trainingTemplate.items.first { $0.id == "bf_fuel" }!
+        XCTAssertEqual(bfItem.options?.count, 8)
 
-        // Resolve Day 7
-        let day7Events = ScheduleResolver.resolve(date: baseDate, plan: plan, selectedTemplateName: "day_7", calendar: calendar)
+        let swItem = trainingTemplate.items.first { $0.id == "sandwich" }!
+        XCTAssertEqual(swItem.options?.count, 11)
 
-        // 3a. Breakfast: Porridge at 10:30 (360 kcal)
-        let breakfast = try XCTUnwrap(day7Events.first { $0.itemId == "d7_breakfast" })
-        XCTAssertTrue(breakfast.item.title.contains("Porridge"))
-        XCTAssertEqual(breakfast.item.kcal, 360.0)
-        XCTAssertEqual(calendar.component(.hour, from: breakfast.resolvedTime), 10)
-        XCTAssertEqual(calendar.component(.minute, from: breakfast.resolvedTime), 30)
+        let tupperItem = trainingTemplate.items.first { $0.id == "tupper1" }!
+        XCTAssertEqual(tupperItem.options?.count, 6)
 
-        // 3b. Morning snack: Fruit at 12:00 (100 kcal)
-        let snack = try XCTUnwrap(day7Events.first { $0.itemId == "d7_morning_snack" })
-        XCTAssertEqual(snack.item.kcal, 100.0)
-        XCTAssertEqual(calendar.component(.hour, from: snack.resolvedTime), 12)
-        XCTAssertEqual(calendar.component(.minute, from: snack.resolvedTime), 0)
+        let mainItem = trainingTemplate.items.first { $0.id == "main_meal" }!
+        XCTAssertEqual(mainItem.options?.count, 7)
 
-        // 3c. Big post-workout steak meal: 14:30 (780 kcal, 65g P)
-        // afterTraining 45 min -> 12:30 + 75m + 45m = 13:45 + 45m = 14:30
-        let steakMeal = try XCTUnwrap(day7Events.first { $0.itemId == "d7_midday_postworkout_combo" })
-        XCTAssertTrue(steakMeal.item.title.contains("μπριζόλα"))
-        XCTAssertEqual(steakMeal.item.kcal, 780.0)
-        XCTAssertEqual(steakMeal.item.protein, 65.0)
-        XCTAssertEqual(calendar.component(.hour, from: steakMeal.resolvedTime), 14)
-        XCTAssertEqual(calendar.component(.minute, from: steakMeal.resolvedTime), 30)
-
-        // 3d. Verify NO rice cakes on Day 7
-        let day7HasRiceCakes = day7.items.contains { $0.title.contains("ρυζογκοφρέτες") }
-        XCTAssertFalse(day7HasRiceCakes, "Day 7 special layout should have NO rice cakes")
-
-        // 3e. Evening yogurt: 20:30 (240 kcal, 20g P)
-        let dinnerYogurt = try XCTUnwrap(day7Events.first { $0.itemId == "d7_dinner" })
-        XCTAssertTrue(dinnerYogurt.item.title.contains("γιαούρτι"))
-        XCTAssertEqual(dinnerYogurt.item.kcal, 240.0)
-        XCTAssertEqual(dinnerYogurt.item.protein, 20.0)
-        XCTAssertEqual(calendar.component(.hour, from: dinnerYogurt.resolvedTime), 20)
-        XCTAssertEqual(calendar.component(.minute, from: dinnerYogurt.resolvedTime), 30)
-
-        // 3f. Extra evening meal: 22:15 (520 kcal, 30g P)
-        let extraMeal = try XCTUnwrap(day7Events.first { $0.itemId == "d7_extra" })
-        XCTAssertEqual(extraMeal.item.kcal, 520.0)
-        XCTAssertEqual(extraMeal.item.protein, 30.0)
-        XCTAssertEqual(calendar.component(.hour, from: extraMeal.resolvedTime), 22)
-        XCTAssertEqual(calendar.component(.minute, from: extraMeal.resolvedTime), 15)
-
-        // 3g. Day 7 Calorie Total
-        let totalDay7Kcal = day7Events.reduce(0.0) { $0 + ($1.item.kcal ?? 0.0) }
-        XCTAssertEqual(totalDay7Kcal, 2000.0)
+        let garnishItem = trainingTemplate.items.first { $0.id == "garnish" }!
+        XCTAssertEqual(garnishItem.options?.count, 8)
+        XCTAssertEqual(garnishItem.isOptional, true)
     }
 }

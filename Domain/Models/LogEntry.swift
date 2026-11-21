@@ -101,6 +101,8 @@ public struct LogEntry: Codable, Equatable, Sendable, Identifiable {
     public var source: LogSource
     public var healthSyncId: String?            // "orchard.<uuid>"
     public var note: String?
+    public var selectedOptionId: String?
+    public var selectedOptionTitle: String?
 
     public init(
         id: UUID = UUID(),
@@ -114,7 +116,9 @@ public struct LogEntry: Codable, Equatable, Sendable, Identifiable {
         fat: Double? = nil,
         source: LogSource = .plan,
         healthSyncId: String? = nil,
-        note: String? = nil
+        note: String? = nil,
+        selectedOptionId: String? = nil,
+        selectedOptionTitle: String? = nil
     ) {
         self.id = id
         self.eventKey = eventKey
@@ -128,5 +132,7 @@ public struct LogEntry: Codable, Equatable, Sendable, Identifiable {
         self.source = source
         self.healthSyncId = healthSyncId
         self.note = note
+        self.selectedOptionId = selectedOptionId
+        self.selectedOptionTitle = selectedOptionTitle
     }
 }

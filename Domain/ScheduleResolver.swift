@@ -50,29 +50,70 @@ public struct ScheduleResolver {
             }
         }
 
-        // 2. Reference: Training session start & end
-        var trainingStartTime: Date?
-        var trainingEndTime: Date?
-
-        if let actualSessions = actualTrainings, let actual = actualSessions.first {
-            if let start = actual.startDate {
-                trainingStartTime = start
-                trainingEndTime = actual.endDate ?? start.addingTimeInterval(TimeInterval(actual.durationMinutes * 60))
-            } else if let startStr = actual.start, let tStart = makeDate(timeString: startStr) {
-                trainingStartTime = tStart
-                trainingEndTime = tStart.addingTimeInterval(TimeInterval(actual.durationMinutes * 60))
+        // 2. Filter items by day-of-week activeWeekdays (and cascade to dependent .withItem children)
+        let todayWeekday = Weekday.from(date: date, calendar: calendar)
+        var excludedItemIds: Set<String> = []
+        for item in template.items {
+            if let active = item.activeWeekdays, !active.isEmpty, !active.contains(todayWeekday) {
+                excludedItemIds.insert(item.id)
             }
-        } else if let templateSession = template.trainingSessions.first, let startStr = templateSession.start, let tStart = makeDate(timeString: startStr) {
-            trainingStartTime = tStart
-            trainingEndTime = tStart.addingTimeInterval(TimeInterval(templateSession.durationMinutes * 60))
+        }
+        var changed = true
+        while changed {
+            changed = false
+            for item in template.items {
+                if !excludedItemIds.contains(item.id),
+                   case .withItem(let parentId) = item.anchor,
+                   excludedItemIds.contains(parentId) {
+                    excludedItemIds.insert(item.id)
+                    changed = true
+                }
+            }
+        }
+        let activeItems = template.items.filter { !excludedItemIds.contains($0.id) }
+
+        // 3. Reference: Training sessions (support multi-session / double training sorted by start)
+        struct SessionInterval {
+            let start: Date
+            let end: Date
         }
 
-        // 3. Resolve items
+        let rawSessions = (actualTrainings != nil && !actualTrainings!.isEmpty) ? actualTrainings! : template.trainingSessions
+        var resolvedSessions: [SessionInterval] = []
+
+        for s in rawSessions {
+            let sStart: Date?
+            let sEnd: Date?
+            if let start = s.startDate {
+                sStart = start
+                sEnd = s.endDate ?? start.addingTimeInterval(TimeInterval(s.durationMinutes * 60))
+            } else if let startStr = s.start, let tStart = makeDate(timeString: startStr) {
+                sStart = tStart
+                sEnd = tStart.addingTimeInterval(TimeInterval(s.durationMinutes * 60))
+            } else {
+                sStart = nil
+                sEnd = nil
+            }
+            if let start = sStart, let end = sEnd {
+                resolvedSessions.append(SessionInterval(start: start, end: end))
+            }
+        }
+        resolvedSessions.sort { $0.start < $1.start }
+
+        func sessionFor(item: PlanItem) -> SessionInterval? {
+            let idx = item.sessionIndex ?? 0
+            if idx >= 0 && idx < resolvedSessions.count {
+                return resolvedSessions[idx]
+            }
+            return resolvedSessions.last
+        }
+
+        // 4. Resolve items
         var resolvedTimes: [String: Date] = [:]
         var attachedToParent: [String: String] = [:] // childItemId -> parentItemId
 
         // Pass 1: Independent anchors
-        for item in template.items {
+        for item in activeItems {
             switch item.anchor {
             case .absolute(let time):
                 if let date = makeDate(timeString: time) {
@@ -83,14 +124,14 @@ public struct ScheduleResolver {
             case .beforeSleep(let minutes):
                 resolvedTimes[item.id] = bedDate.addingTimeInterval(-TimeInterval(minutes * 60))
             case .beforeTraining(let minutes):
-                if let tStart = trainingStartTime {
-                    resolvedTimes[item.id] = tStart.addingTimeInterval(-TimeInterval(minutes * 60))
+                if let sess = sessionFor(item: item) {
+                    resolvedTimes[item.id] = sess.start.addingTimeInterval(-TimeInterval(minutes * 60))
                 } else if let fallback = item.fallbackTime, let fbDate = makeDate(timeString: fallback) {
                     resolvedTimes[item.id] = fbDate
                 }
             case .afterTraining(let minutes):
-                if let tEnd = trainingEndTime {
-                    resolvedTimes[item.id] = tEnd.addingTimeInterval(TimeInterval(minutes * 60))
+                if let sess = sessionFor(item: item) {
+                    resolvedTimes[item.id] = sess.end.addingTimeInterval(TimeInterval(minutes * 60))
                 } else if let fallback = item.fallbackTime, let fbDate = makeDate(timeString: fallback) {
                     resolvedTimes[item.id] = fbDate
                 }
@@ -100,7 +141,7 @@ public struct ScheduleResolver {
         }
 
         // Pass 2: Dependent anchors (.withItem) - iterative resolution for potential chains
-        var remainingItems = template.items.filter { $0.anchor.kind == .withItem }
+        var remainingItems = activeItems.filter { $0.anchor.kind == .withItem }
         var iterations = 0
         let maxIterations = remainingItems.count + 1
 
@@ -124,17 +165,17 @@ public struct ScheduleResolver {
             }
         }
 
-        // 4. Map children into parent's attachedItems
+        // 5. Map children into parent's attachedItems
         var parentToChildren: [String: [PlanItem]] = [:]
         for (childId, parentId) in attachedToParent {
-            if let childItem = template.items.first(where: { $0.id == childId }) {
+            if let childItem = activeItems.first(where: { $0.id == childId }) {
                 parentToChildren[parentId, default: []].append(childItem)
             }
         }
 
-        // 5. Construct ScheduledEvents
+        // 6. Construct ScheduledEvents
         var events: [ScheduledEvent] = []
-        for item in template.items {
+        for item in activeItems {
             guard let resolvedTime = resolvedTimes[item.id] else { continue }
             let event = ScheduledEvent(
                 id: "evt.\(item.id).\(dateString)",
@@ -150,15 +191,26 @@ public struct ScheduleResolver {
             events.append(event)
         }
 
-        // 6. Chronological sort
-        events.sort { $0.resolvedTime < $1.resolvedTime }
+        // 7. Deterministic sort (resolvedTime, with tie-breaker by template items order)
+        let templateOrder = Dictionary(uniqueKeysWithValues: template.items.enumerated().map { ($1.id, $0) })
+        events.sort {
+            if $0.resolvedTime != $1.resolvedTime {
+                return $0.resolvedTime < $1.resolvedTime
+            }
+            let order0 = templateOrder[$0.itemId] ?? 0
+            let order1 = templateOrder[$1.itemId] ?? 0
+            return order0 < order1
+        }
 
-        // 7. Check minimum meal gap conflicts
+        // 8. Check minimum meal gap conflicts (ignores isOptional == true items and attached items)
         let minMealGapMinutes = plan.settings.minMealGapMinutes
         var previousMealTime: Date? = nil
 
         for i in 0..<events.count {
             if events[i].item.type == .meal {
+                if events[i].item.isOptional == true || events[i].attachedToItemId != nil {
+                    continue
+                }
                 if let prevTime = previousMealTime {
                     let gapMinutes = events[i].resolvedTime.timeIntervalSince(prevTime) / 60.0
                     if gapMinutes < Double(minMealGapMinutes) {

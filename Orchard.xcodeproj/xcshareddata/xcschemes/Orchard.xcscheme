@@ -21,6 +21,34 @@
                ReferencedContainer = "container:Orchard.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F7BEF9B729EF85D7BF5D9E7D"
+               BuildableName = "OrchardDomain.framework"
+               BlueprintName = "OrchardDomain"
+               ReferencedContainer = "container:Orchard.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C1B802B1D9879405FC05ED3A"
+               BuildableName = "OrchardServices.framework"
+               BlueprintName = "OrchardServices"
+               ReferencedContainer = "container:Orchard.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

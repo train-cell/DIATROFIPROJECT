@@ -27,9 +27,9 @@ public enum PeriWorkoutPhase: String, Codable, Sendable {
         case .preWorkoutFuel:
             return "Σύνθετοι υδατάνθρακες + άπαχη πρωτεΐνη. Χαμηλά λιπαρά & φυτικές ίνες για γρήγορη γαστρική κένωση."
         case .intraWorkoutHydration:
-            return "500-1000ml νερό, νάτριο, κάλιο, μαγνήσιο + ηλεκτρολύτες Bolero ή EAAs."
+            return "500ml νερό + 1 κοφτή μεζούρα HIGH5 ηλεκτρολύτες + υγρά BCAA (1-2 καπάκια)"
         case .postWorkoutAnabolic:
-            return "30-40g ταχείας απορρόφησης πρωτεΐνη ορού γάλακτος (Whey) + 40-60g υδατάνθρακας για αναπλήρωση γλυκογόνου."
+            return "2ο 500άρι HIGH5 + BCAA, 30g Πρωτεΐνη AFTER + 1 μεζούρα γλουταμίνη"
         case .postWorkoutSolid:
             return "Πλήρες στερεό γεύμα (κοτόπουλο/μοσχάρι + ρύζι/πατάτα) για διαρκή πρωτεϊνοσύνθεση."
         }

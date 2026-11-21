@@ -138,11 +138,11 @@ public struct StaplesLookupSheet: View {
 // MARK: - 2. Custom Recipe Builder Sheet
 public struct RecipeBuilderSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var recipeTitle: String = "Power Proats (Βρώμη + Whey)"
+    @State private var recipeTitle: String = "Ομελέτα Βρώμης (Βρώμη + Πρωτεΐνη AFTER)"
     @State private var servings: Int = 1
     @State private var ingredients: [RecipeIngredient] = [
         RecipeIngredient.fromStaple(item: StapleFoodLibrary.lookup(barcode: "5201001000108")!, grams: 80.0), // Oats
-        RecipeIngredient.fromStaple(item: StapleFoodLibrary.lookup(barcode: "5201001000104")!, grams: 35.0), // Whey
+        RecipeIngredient.fromStaple(item: StapleFoodLibrary.lookup(barcode: "5201001000125") ?? StapleFoodLibrary.lookup(barcode: "5201001000104")!, grams: 30.0), // Protein AFTER
         RecipeIngredient.fromStaple(item: StapleFoodLibrary.lookup(barcode: "5201001000113")!, grams: 20.0)  // PB
     ]
 

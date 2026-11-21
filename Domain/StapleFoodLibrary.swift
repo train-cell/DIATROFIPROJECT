@@ -86,7 +86,18 @@ public enum StapleFoodLibrary {
         StapleFoodItem(id: "extra_virgin_olive_oil", nameGreek: "Έξτρα Παρθένο Ελαιόλαδο", category: .healthyFat, kcal: 884, protein: 0.0, carbs: 0.0, fats: 100.0, fiber: 0.0, barcode: "5201001000112"),
         StapleFoodItem(id: "peanut_butter", nameGreek: "Φυστικοβούτυρο 100% Φυσικό", category: .healthyFat, kcal: 588, protein: 25.0, carbs: 20.0, fats: 50.0, fiber: 8.0, barcode: "5201001000113"),
         StapleFoodItem(id: "almonds_raw", nameGreek: "Ωμά Αμύγδαλα (Ανάλατα)", category: .healthyFat, kcal: 579, protein: 21.2, carbs: 21.6, fats: 49.9, fiber: 12.5, barcode: "5201001000114"),
-        StapleFoodItem(id: "steamed_broccoli", nameGreek: "Μπρόκολο στον Ατμό", category: .vegetable, kcal: 35, protein: 2.4, carbs: 7.2, fats: 0.4, fiber: 3.3, barcode: "5201001000115")
+        StapleFoodItem(id: "steamed_broccoli", nameGreek: "Μπρόκολο στον Ατμό", category: .vegetable, kcal: 35, protein: 2.4, carbs: 7.2, fats: 0.4, fiber: 3.3, barcode: "5201001000115"),
+        StapleFoodItem(id: "quinoa", nameGreek: "Κινόα (Βρασμένη)", category: .complexCarb, kcal: 120, protein: 4.4, carbs: 21.3, fats: 1.9, fiber: 2.8, barcode: "5201001000116"),
+        StapleFoodItem(id: "oat_bran", nameGreek: "Πίτουρο Βρώμης", category: .complexCarb, kcal: 246, protein: 17.3, carbs: 66.2, fats: 7.0, fiber: 15.4, barcode: "5201001000117"),
+        StapleFoodItem(id: "cottage_cheese", nameGreek: "Τυρί Cottage (Χαμηλών Λιπαρών)", category: .leanProtein, kcal: 98, protein: 11.1, carbs: 3.4, fats: 4.3, fiber: 0.0, barcode: "5201001000118"),
+        StapleFoodItem(id: "anthotyro", nameGreek: "Ανθότυρο Φρέσκο", category: .leanProtein, kcal: 175, protein: 11.5, carbs: 2.0, fats: 13.5, fiber: 0.0, barcode: "5201001000119"),
+        StapleFoodItem(id: "feta_cheese", nameGreek: "Τυρί Φέτα Π.Ο.Π.", category: .healthyFat, kcal: 264, protein: 14.2, carbs: 4.1, fats: 21.3, fiber: 0.0, barcode: "5201001000120"),
+        StapleFoodItem(id: "roast_turkey", nameGreek: "Ψητή Γαλοπούλα Φιλέτο", category: .leanProtein, kcal: 104, protein: 21.0, carbs: 1.5, fats: 1.6, fiber: 0.0, barcode: "5201001000121"),
+        StapleFoodItem(id: "tahini", nameGreek: "Ταχίνι Φυσικό", category: .healthyFat, kcal: 595, protein: 17.0, carbs: 21.2, fats: 53.8, fiber: 9.3, barcode: "5201001000122"),
+        StapleFoodItem(id: "almond_butter", nameGreek: "Κρέμα Αμυγδάλου 100%", category: .healthyFat, kcal: 614, protein: 21.0, carbs: 18.8, fats: 55.5, fiber: 10.5, barcode: "5201001000123"),
+        StapleFoodItem(id: "beef_patty", nameGreek: "Μπιφτέκι Μοσχαρίσιο (Σχάρας)", category: .leanProtein, kcal: 215, protein: 24.5, carbs: 2.0, fats: 12.0, fiber: 0.5, barcode: "5201001000124"),
+        StapleFoodItem(id: "protein_after", nameGreek: "Πρωτεΐνη AFTER (Σκόνη)", category: .supplement, kcal: 380, protein: 80.0, carbs: 5.0, fats: 2.0, fiber: 0.0, barcode: "5201001000125"),
+        StapleFoodItem(id: "oat_omelet", nameGreek: "Ομελέτα Βρώμης (4 ασπράδια + 1 κρόκος)", category: .leanProtein, kcal: 220, protein: 22.0, carbs: 14.0, fats: 6.5, fiber: 2.5, barcode: "5201001000126")
     ]
 
     /// Searches items by Greek title or ID.

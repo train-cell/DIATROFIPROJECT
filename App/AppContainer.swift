@@ -22,14 +22,53 @@ public final class AppContainer: ObservableObject {
     // MARK: - Published State
     @Published public var plan: Plan
     @Published public var selectedTemplateKey: String
-    @Published public var selectedDate: Date = Date()
+    @Published public var selectedDate: Date = Date() {
+        didSet {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd"
+            let dateKey = f.string(from: selectedDate)
+            self.selectedTemplateKey = self.selectedTemplatesByDate[dateKey] ?? self.plan.templateKey(for: selectedDate) ?? self.selectedTemplateKey
+            self.waterIntakeMl = UserDefaults.standard.double(forKey: "orchard.water.\(dateKey)")
+            self.logEntries = Self.loadLogEntries(forDateKey: dateKey)
+            refreshSchedule()
+        }
+    }
     @Published public var selectedTemplatesByDate: [String: String] = [:]
+    @Published public var selectedOptionsByDate: [String: [String: String]] = [:]
     @Published public var logEntries: [LogEntry] = []
     @Published public var biteCount: Int = 0
 
-    // MARK: - Water Hydration Tracking (4.0 Liters Target)
+    // MARK: - Water Hydration Tracking (Dynamic Target)
     @Published public var waterIntakeMl: Double = 0.0
-    public let targetWaterMl: Double = 4000.0 // 4.0 Liters daily target
+
+    public var targetWaterMl: Double {
+        if let template = plan.template(for: selectedDate, selectedTemplateName: selectedTemplateKey),
+           let tMl = template.targetWaterMl, tMl > 0 {
+            return tMl
+        }
+        return plan.settings.targetWaterMl > 0 ? plan.settings.targetWaterMl : 3000.0
+    }
+
+    // MARK: - Optional Fasting & Goal Tracking ON/OFF
+    @Published public var isFastingEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isFastingEnabled, forKey: "orchard.fastingEnabled")
+        }
+    }
+
+    @Published public var isGoalTrackingEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isGoalTrackingEnabled, forKey: "orchard.goalTrackingEnabled")
+        }
+    }
+
+    // MARK: - AI Nutrition Coach State
+    @Published public var aiAutoLogEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(aiAutoLogEnabled, forKey: "orchard.ai.autoLogEnabled")
+        }
+    }
+    @Published public var aiChatMessages: [AICoachChatMessage] = []
 
     // MARK: - 12 Premier Athletic Features State
     @Published public var weightLogs: [DailyWeightLog] = [
@@ -39,7 +78,7 @@ public final class AppContainer: ObservableObject {
         DailyWeightLog(date: Date().addingTimeInterval(-4 * 86400), weightKg: 81.3, intakeKcal: 2280),
         DailyWeightLog(date: Date(), weightKg: 81.0, intakeKcal: 2300)
     ]
-    @Published public var coachingGoal: CoachingGoal = .fatLoss
+    @Published public var coachingGoal: CoachingGoal = .maintenance
     @Published public var targetGoalWeightKg: Double = 78.0
     @Published public var digestiveLogs: [DigestiveLog] = []
     @Published public var customRecipes: [CustomRecipe] = []
@@ -47,6 +86,7 @@ public final class AppContainer: ObservableObject {
 
     @Published public var resolvedEvents: [ScheduledEvent] = []
     @Published public var appleProgress: AppleProgress = AppleProgress()
+    @Published public var supplementProgress: SupplementProgress = SupplementProgress(completed: 0, total: 0, isCompleted: true)
     @Published public var energyBalance: EnergyBalanceSummary?
     @Published public var sleepEntries: [SleepEntry] = []
     @Published public var weeklyStats: WeeklyStats?
@@ -62,6 +102,11 @@ public final class AppContainer: ObservableObject {
         self.healthStore = healthStore ?? FakeHealthStore()
         #endif
 
+        // 0. Load Feature Toggles (default false)
+        self.isFastingEnabled = UserDefaults.standard.bool(forKey: "orchard.fastingEnabled")
+        self.isGoalTrackingEnabled = UserDefaults.standard.bool(forKey: "orchard.goalTrackingEnabled")
+        self.aiAutoLogEnabled = UserDefaults.standard.bool(forKey: "orchard.ai.autoLogEnabled")
+
         // 1. Load Plan from bundle or embedded fallback
         let loadedPlan = Self.loadDefaultPlan()
         self.plan = loadedPlan
@@ -69,15 +114,24 @@ public final class AppContainer: ObservableObject {
         // 2. Initial template key from weekday or today's saved selection
         let savedMap = UserDefaults.standard.dictionary(forKey: "orchard.selectedTemplatesByDate") as? [String: String] ?? [:]
         self.selectedTemplatesByDate = savedMap
+
+        let savedOptions = UserDefaults.standard.dictionary(forKey: "orchard.selectedOptionsByDate") as? [String: [String: String]] ?? [:]
+        self.selectedOptionsByDate = savedOptions
+
         let todayFormatter = DateFormatter()
         todayFormatter.dateFormat = "yyyy-MM-dd"
         let todayKey = todayFormatter.string(from: Date())
         let savedToday = savedMap[todayKey]
-        let initialKey = savedToday ?? (loadedPlan.templateKey(for: Date()) ?? "day_1")
+        let initialKey = savedToday ?? (loadedPlan.templateKey(for: Date()) ?? loadedPlan.templates.keys.sorted().first ?? "training")
         self.selectedTemplateKey = initialKey
 
-        // 3. Load today's hydration intake (4.0 Liters Target)
+        // 3. Load today's hydration intake & persisted log entries
         self.waterIntakeMl = UserDefaults.standard.double(forKey: "orchard.water.\(todayKey)")
+        if NSClassFromString("XCTestCase") == nil {
+            self.logEntries = Self.loadLogEntries(forDateKey: todayKey)
+        } else {
+            self.logEntries = []
+        }
 
         // 4. Resolve initial schedule & progress
         self.refreshSchedule()
@@ -115,7 +169,6 @@ public final class AppContainer: ObservableObject {
     }
 
     /// Calculates how many times a given day template was selected in the rolling 14-day window.
-    /// User rule: Each of the 7 days can be selected up to 2 times every 2 weeks (14 days).
     public func usageCountInLast14Days(templateKey: String, referenceDate: Date = Date()) -> Int {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: referenceDate)
@@ -140,7 +193,30 @@ public final class AppContainer: ObservableObject {
         return count
     }
 
-    // MARK: - Water Hydration Operations (4.0 Liters Target)
+    // MARK: - Option Selection (Menu Picker)
+    public func selectedOption(for item: PlanItem) -> PlanOption? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateKey = formatter.string(from: selectedDate)
+        let optId = selectedOptionsByDate[dateKey]?[item.id]
+        if let opt = item.option(for: optId) {
+            return opt
+        }
+        return item.options?.first
+    }
+
+    public func selectOption(_ option: PlanOption, for item: PlanItem) {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateKey = formatter.string(from: selectedDate)
+        var map = selectedOptionsByDate[dateKey] ?? [:]
+        map[item.id] = option.id
+        selectedOptionsByDate[dateKey] = map
+        UserDefaults.standard.set(selectedOptionsByDate, forKey: "orchard.selectedOptionsByDate")
+        refreshSchedule()
+    }
+
+    // MARK: - Water Hydration Operations
     public func addWater(ml: Double) {
         waterIntakeMl = max(0.0, waterIntakeMl + ml)
         let formatter = DateFormatter()
@@ -165,21 +241,80 @@ public final class AppContainer: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "orchard.water.\(dateKey)")
     }
 
+    // MARK: - Persistence for Log Entries
+    private static func loadLogEntries(forDateKey dateKey: String) -> [LogEntry] {
+        guard let data = UserDefaults.standard.data(forKey: "orchard.logs.\(dateKey)"),
+              let decoded = try? JSONDecoder().decode([LogEntry].self, from: data) else {
+            return []
+        }
+        return decoded
+    }
+
+    private func saveCurrentLogEntries() {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dateKey = formatter.string(from: selectedDate)
+        if let data = try? JSONEncoder().encode(logEntries) {
+            UserDefaults.standard.set(data, forKey: "orchard.logs.\(dateKey)")
+        }
+    }
+
     // MARK: - Logging Operations
     public func logMeal(
         event: ScheduledEvent,
+        selectedOption: PlanOption? = nil,
         status: LogStatus = .done,
         kcal: Double? = nil
     ) {
+        let wasAlreadyDone = logEntries.contains { ($0.itemId == event.itemId || $0.eventKey == event.id) && $0.status == .done }
+
         // Remove existing log for this event/item if present
         logEntries.removeAll { $0.itemId == event.itemId || $0.eventKey == event.id }
+
+        let opt = selectedOption ?? self.selectedOption(for: event.item)
+        let optMacros = opt != nil ? event.item.effectiveMacros(selectedOptionId: opt?.id) : nil
 
         let entry = LogEntry(
             eventKey: event.id,
             itemId: event.itemId,
             status: status,
             timestamp: Date(),
-            kcal: kcal ?? event.item.kcal,
+            kcal: kcal ?? optMacros?.kcal ?? event.item.kcal,
+            protein: optMacros?.protein ?? event.item.protein,
+            carbs: optMacros?.carbs ?? event.item.carbs,
+            fat: optMacros?.fat ?? event.item.fat,
+            source: .plan,
+            note: opt?.title ?? event.item.title,
+            selectedOptionId: opt?.id,
+            selectedOptionTitle: opt?.title
+        )
+        logEntries.append(entry)
+
+        if status == .done && !wasAlreadyDone {
+            biteCount += 1
+        }
+
+        saveCurrentLogEntries()
+        refreshSchedule()
+
+        let store = self.healthStore
+        let item = event.item
+        Task {
+            try? await store.writeDietaryLog(entry, item: item)
+        }
+    }
+
+    public func logSupplement(event: ScheduledEvent) {
+        let isAlreadyLogged = logEntries.contains { ($0.itemId == event.itemId || $0.eventKey == event.id) && $0.status == .done }
+
+        logEntries.removeAll { $0.itemId == event.itemId || $0.eventKey == event.id }
+
+        let entry = LogEntry(
+            eventKey: event.id,
+            itemId: event.itemId,
+            status: .done,
+            timestamp: Date(),
+            kcal: event.item.kcal,
             protein: event.item.protein,
             carbs: event.item.carbs,
             fat: event.item.fat,
@@ -188,10 +323,11 @@ public final class AppContainer: ObservableObject {
         )
         logEntries.append(entry)
 
-        if status == .done {
-            biteCount += 1
+        if !isAlreadyLogged, let waterMl = event.item.waterMl, waterMl > 0 {
+            addWater(ml: waterMl)
         }
 
+        saveCurrentLogEntries()
         refreshSchedule()
 
         let store = self.healthStore
@@ -204,10 +340,20 @@ public final class AppContainer: ObservableObject {
     public func undoLog(itemId: String) {
         if let idx = logEntries.firstIndex(where: { $0.itemId == itemId }) {
             let removedEntry = logEntries[idx]
-            if removedEntry.status == .done {
+            let matchedItem = resolvedEvents.first(where: { $0.itemId == itemId })?.item ?? plan.template(for: selectedDate, selectedTemplateName: selectedTemplateKey)?.items.first(where: { $0.id == itemId })
+            let isMeal = matchedItem?.type == .meal || (matchedItem == nil && removedEntry.source == .manual)
+
+            if removedEntry.status == .done && isMeal {
                 biteCount = max(0, biteCount - 1)
             }
+
+            // If item has waterMl, subtract it
+            if let water = matchedItem?.waterMl, water > 0 {
+                addWater(ml: -water)
+            }
+
             logEntries.remove(at: idx)
+            saveCurrentLogEntries()
             refreshSchedule()
 
             let store = self.healthStore
@@ -217,6 +363,7 @@ public final class AppContainer: ObservableObject {
         }
     }
 
+    @discardableResult
     public func addManualLog(
         title: String,
         type: PlanItemType,
@@ -225,8 +372,9 @@ public final class AppContainer: ObservableObject {
         carbs: Double?,
         fat: Double?,
         notes: String? = nil,
-        timestamp: Date = Date()
-    ) {
+        timestamp: Date = Date(),
+        source: LogSource = .manual
+    ) -> String {
         let uniqueId = "manual_\(UUID().uuidString.prefix(8))"
         let entry = LogEntry(
             eventKey: uniqueId,
@@ -237,26 +385,44 @@ public final class AppContainer: ObservableObject {
             protein: protein,
             carbs: carbs,
             fat: fat,
-            source: .manual,
+            source: source,
             note: "\(title)\(notes.map { " - \($0)" } ?? "")"
         )
         logEntries.append(entry)
         biteCount += 1
+        saveCurrentLogEntries()
         refreshSchedule()
 
         let store = self.healthStore
         Task {
             try? await store.writeDietaryLog(entry, item: nil)
         }
+        return uniqueId
     }
 
     public func deleteLogEntry(id: UUID) {
         if let idx = logEntries.firstIndex(where: { $0.id == id }) {
             let removedEntry = logEntries[idx]
-            if removedEntry.status == .done {
+            let matchedItem = resolvedEvents.first(where: { $0.itemId == removedEntry.itemId })?.item ?? plan.template(for: selectedDate, selectedTemplateName: selectedTemplateKey)?.items.first(where: { $0.id == removedEntry.itemId })
+            let isManualOrAI: Bool
+            switch removedEntry.source {
+            case .manual, .ai:
+                isManualOrAI = true
+            case .plan:
+                isManualOrAI = false
+            }
+            let isMeal = matchedItem?.type == .meal || (matchedItem == nil && isManualOrAI)
+
+            if removedEntry.status == .done && isMeal {
                 biteCount = max(0, biteCount - 1)
             }
+
+            if let water = matchedItem?.waterMl, water > 0 {
+                addWater(ml: -water)
+            }
+
             logEntries.remove(at: idx)
+            saveCurrentLogEntries()
             refreshSchedule()
 
             let store = self.healthStore
@@ -264,6 +430,144 @@ public final class AppContainer: ObservableObject {
                 try? await store.deleteDietaryLog(for: removedEntry.id)
             }
         }
+    }
+
+    // MARK: - AI Nutrition Coach Operations
+    public func makeAICoachSnapshot() -> AICoachDailySnapshot {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        let dateKey = f.string(from: selectedDate)
+        return AICoachDailySnapshot(
+            date: selectedDate,
+            weekday: Weekday.from(date: selectedDate),
+            selectedTemplateKey: selectedTemplateKey,
+            resolvedEvents: resolvedEvents,
+            logEntries: logEntries,
+            waterIntakeMl: waterIntakeMl,
+            targetWaterMl: targetWaterMl,
+            selectedOptionIds: selectedOptionsByDate[dateKey] ?? [:]
+        )
+    }
+
+    @discardableResult
+    public func applyAICoachAction(_ action: AICoachLogAction) -> String? {
+        switch action.kind {
+        case .meal:
+            if let itemId = action.itemId, let matchingEvent = resolvedEvents.first(where: { $0.itemId == itemId }) {
+                var selectedOpt: PlanOption? = nil
+                if let optId = action.selectedOptionId {
+                    let matchedOpt = matchingEvent.item.options?.first(where: {
+                        $0.id == optId ||
+                        $0.id.replacingOccurrences(of: "_opt_", with: "_") == optId ||
+                        optId.replacingOccurrences(of: "tupper_", with: "tupper_opt_") == $0.id ||
+                        optId.replacingOccurrences(of: "sw_", with: "sw_opt_") == $0.id ||
+                        $0.id.hasSuffix(optId) || optId.hasSuffix($0.id)
+                    })
+                    if let opt = matchedOpt {
+                        selectOption(opt, for: matchingEvent.item)
+                        selectedOpt = opt
+                    }
+                }
+                logMeal(event: matchingEvent, selectedOption: selectedOpt, kcal: action.kcal)
+                return matchingEvent.itemId
+            } else {
+                return addManualLog(
+                    title: action.title,
+                    type: .meal,
+                    kcal: action.kcal,
+                    protein: action.protein,
+                    carbs: action.carbs,
+                    fat: action.fat,
+                    notes: action.notes
+                )
+            }
+
+        case .supplement:
+            if let itemId = action.itemId, let matchingEvent = resolvedEvents.first(where: { $0.itemId == itemId }) {
+                logSupplement(event: matchingEvent)
+                return matchingEvent.itemId
+            } else {
+                let logId = addManualLog(
+                    title: action.title,
+                    type: .supplement,
+                    kcal: action.kcal,
+                    protein: action.protein,
+                    carbs: action.carbs,
+                    fat: action.fat,
+                    notes: action.notes
+                )
+                if let water = action.waterMl, water > 0 {
+                    addWater(ml: water)
+                }
+                return logId
+            }
+
+        case .water:
+            let amount = action.waterMl ?? 250.0
+            addWater(ml: amount)
+            return nil
+        }
+    }
+
+    public func undoAICoachAction(_ action: AICoachLogAction, appliedLogId: String? = nil) {
+        switch action.kind {
+        case .water:
+            let amount = action.waterMl ?? 250.0
+            addWater(ml: -amount)
+
+        case .meal, .supplement:
+            let targetId = appliedLogId ?? action.itemId
+            if let id = targetId {
+                if resolvedEvents.contains(where: { $0.itemId == id }) {
+                    undoLog(itemId: id)
+                } else if let entry = logEntries.first(where: { $0.itemId == id || $0.eventKey == id }) {
+                    deleteLogEntry(id: entry.id)
+                }
+            }
+            if action.kind == .supplement, action.itemId == nil, let water = action.waterMl, water > 0 {
+                addWater(ml: -water)
+            }
+        }
+    }
+
+    public func sendAICoachMessage(_ text: String) async throws {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let userMsg = AICoachChatMessage(isUser: true, text: trimmed)
+        aiChatMessages.append(userMsg)
+
+        let service = AICoachService.makeLive()
+        let response = try await service.sendMessage(
+            trimmed,
+            history: aiChatMessages,
+            plan: plan,
+            snapshot: makeAICoachSnapshot()
+        )
+
+        var appliedIds = Set<String>()
+        var appliedLogMap: [String: String] = [:]
+        if aiAutoLogEnabled && !response.suggestedActions.isEmpty {
+            for action in response.suggestedActions {
+                if let logId = applyAICoachAction(action) {
+                    appliedLogMap[action.id] = logId
+                }
+                appliedIds.insert(action.id)
+            }
+        }
+
+        let assistantMsg = AICoachChatMessage(
+            isUser: false,
+            text: response.replyGreek,
+            suggestedActions: response.suggestedActions,
+            appliedActionIds: appliedIds,
+            appliedLogIds: appliedLogMap
+        )
+        aiChatMessages.append(assistantMsg)
+    }
+
+    public func clearAIChat() {
+        aiChatMessages.removeAll()
     }
 
     // MARK: - Schedule & Progress Refresh
@@ -278,6 +582,11 @@ public final class AppContainer: ObservableObject {
             events: resolvedEvents,
             logEntries: logEntries,
             referenceDate: Date()
+        )
+
+        supplementProgress = AppleProgress.calculateSupplements(
+            events: resolvedEvents,
+            logEntries: logEntries
         )
 
         let items = Dictionary(uniqueKeysWithValues: (plan.template(for: selectedDate, selectedTemplateName: selectedTemplateKey)?.items ?? []).map { ($0.id, $0) })
@@ -326,27 +635,46 @@ public final class AppContainer: ObservableObject {
             }
         }
 
-        // Fallback minimal default plan
+        // Fallback minimal default plan matching protocol #1
         let defaultTemplate = DayTemplate(
-            trainingSessions: [TrainingSession(start: "18:00", durationMinutes: 90, estKcal: 600)],
+            title: "Προπόνηση",
+            subtitle: "Τεχνική Κολύμβηση (14:30 - 16:30)",
+            icon: "figure.pool.swim",
+            targetWaterMl: 3000.0,
+            order: 1,
+            trainingSessions: [TrainingSession(start: "14:30", durationMinutes: 120, estKcal: 800)],
             items: [
-                PlanItem(id: "d1_breakfast", type: .meal, title: "Πρωινό: Βρώμη με γάλα και μέλι", anchor: .afterWake(minutes: 30), kcal: 450, protein: 25, carbs: 60, fat: 10),
-                PlanItem(id: "d1_lunch", type: .meal, title: "Μεσημεριανό: Κοτόπουλο φιλέτο με ρύζι", anchor: .absolute(time: "14:00"), kcal: 650, protein: 50, carbs: 70, fat: 12),
-                PlanItem(id: "d1_snack", type: .meal, title: "Απογευματινό: Φρούτο και ξηροί καρποί", anchor: .beforeTraining(minutes: 90), kcal: 300, protein: 10, carbs: 40, fat: 10),
-                PlanItem(id: "d1_dinner", type: .meal, title: "Βραδινό: Ομελέτα με λαχανικά", anchor: .afterTraining(minutes: 45), kcal: 500, protein: 35, carbs: 20, fat: 18)
+                PlanItem(id: "d1_breakfast", type: .meal, title: "10:30 Πρωινό (Υγρά & Στερεά)", anchor: .afterWake(minutes: 0), kcal: 450, protein: 35, carbs: 45, fat: 12),
+                PlanItem(id: "d1_lunch", type: .meal, title: "12:00–12:30 Ελαφρύ Γεύμα (Sandwich/Porridge)", anchor: .beforeTraining(minutes: 120), kcal: 450, protein: 30, carbs: 55, fat: 12),
+                PlanItem(id: "d1_intra", type: .supplement, title: "Έως 11:45: 500ml HIGH5 + BCAA + 20g Πρωτεΐνη AFTER", anchor: .beforeTraining(minutes: 165), waterMl: 500),
+                PlanItem(id: "d1_post", type: .supplement, title: "Μετά την προπόνηση: 500ml HIGH5 + BCAA + 30g Πρωτεΐνη AFTER + Γλουταμίνη", anchor: .afterTraining(minutes: 0), waterMl: 500),
+                PlanItem(id: "d1_dinner", type: .meal, title: "17:30–18:00 Κυρίως Γεύμα (Tupper)", anchor: .afterTraining(minutes: 60), kcal: 700, protein: 50, carbs: 70, fat: 20)
             ]
         )
 
-        var templates = ["day_1": defaultTemplate]
+        var templates = ["training": defaultTemplate]
         templates["rest"] = DayTemplate(
+            title: "Ανάπαυση",
+            subtitle: "Αποκατάσταση & Ενυδάτωση",
+            icon: "bed.double.fill",
+            targetWaterMl: 2500.0,
+            order: 5,
             trainingSessions: [],
             items: [],
             rules: [Rule(type: .prefer, text: "Ημέρα ανάπαυσης και αποκατάστασης")]
         )
 
         return Plan(
-            settings: PlanSettings(wake: "07:30", bed: "23:30", minMealGapMinutes: 60),
-            weekly: ["mon": "day_1", "tue": "day_1", "wed": "day_1", "thu": "day_1", "fri": "day_1", "sat": "day_1", "sun": "rest"],
+            settings: PlanSettings(
+                wake: "10:30",
+                bed: "00:30",
+                minMealGapMinutes: 60,
+                targetWaterMl: 3000.0,
+                minWaterMl: 2500.0,
+                sport: "Τεχνική Κολύμβηση",
+                planLabel: "Πρόγραμμα #1 (11.11.26)"
+            ),
+            weekly: ["mon": "training", "tue": "training", "wed": "training", "thu": "training", "fri": "training", "sat": "training", "sun": "rest"],
             templates: templates
         )
     }
@@ -355,6 +683,11 @@ public final class AppContainer: ObservableObject {
         var mutablePlan = plan
         if mutablePlan.templates["rest"] == nil {
             mutablePlan.templates["rest"] = DayTemplate(
+                title: "Ανάπαυση",
+                subtitle: "Αποκατάσταση & Ενυδάτωση",
+                icon: "bed.double.fill",
+                targetWaterMl: 2500.0,
+                order: 5,
                 trainingSessions: [],
                 items: [],
                 rules: [Rule(type: .prefer, text: "Ημέρα ανάπαυσης και αποκατάστασης")]
@@ -411,26 +744,56 @@ public final class AppContainer: ObservableObject {
             isNutritionCompleted: appleProgress.progressFraction >= 0.75,
             isHydrationCompleted: waterIntakeMl >= targetWaterMl,
             isSleepCompleted: (sleepEntries.first?.recoveryScore ?? 80) >= 75,
-            isSupplementsCompleted: true
+            isSupplementsCompleted: supplementProgress.total == 0 || supplementProgress.isCompleted
         )
         return HabitStreakEngine.computeStreaks(history: [todayStatus])
     }
 
     public var periWorkoutStatus: PeriWorkoutStatus {
         let cal = Calendar.current
-        var start = cal.date(bySettingHour: 18, minute: 0, second: 0, of: selectedDate) ?? Date()
-        var duration = 90
-        if let session = plan.templates[selectedTemplateKey]?.trainingSessions.first {
-            duration = session.durationMinutes
-            if let str = session.start {
-                let parts = str.split(separator: ":").compactMap { Int($0) }
-                if parts.count >= 2, let parsed = cal.date(bySettingHour: parts[0], minute: parts[1], second: 0, of: selectedDate) {
-                    start = parsed
-                }
+        let currentTemplate = plan.template(for: selectedDate, selectedTemplateName: selectedTemplateKey)
+        let sessions = currentTemplate?.trainingSessions ?? []
+
+        if sessions.isEmpty {
+            let noon = cal.date(bySettingHour: 12, minute: 0, second: 0, of: selectedDate) ?? Date()
+            return PeriWorkoutEngine.evaluatePhase(workoutStart: noon, workoutEnd: noon)
+        }
+
+        let now = Date()
+        var selectedSession: (start: Date, end: Date)? = nil
+
+        let resolvedSessions: [(start: Date, end: Date)] = sessions.compactMap { session in
+            guard let startStr = session.start else { return nil }
+            let parts = startStr.split(separator: ":").compactMap { Int($0) }
+            guard parts.count >= 2,
+                  let startDate = cal.date(bySettingHour: parts[0], minute: parts[1], second: 0, of: selectedDate) else {
+                return nil
+            }
+            let endDate = startDate.addingTimeInterval(TimeInterval(session.durationMinutes * 60))
+            return (start: startDate, end: endDate)
+        }.sorted { $0.start < $1.start }
+
+        // 1. Check if we are inside or in anabolic window of a session
+        for s in resolvedSessions {
+            if now >= s.start.addingTimeInterval(-1800) && now <= s.end.addingTimeInterval(7200) {
+                selectedSession = s
+                break
             }
         }
-        let end = start.addingTimeInterval(TimeInterval(duration * 60))
-        return PeriWorkoutEngine.evaluatePhase(workoutStart: start, workoutEnd: end)
+
+        // 2. Otherwise pick next upcoming session today
+        if selectedSession == nil {
+            selectedSession = resolvedSessions.first(where: { $0.start > now })
+        }
+
+        let finalSession = selectedSession ?? resolvedSessions.first
+
+        if let s = finalSession {
+            return PeriWorkoutEngine.evaluatePhase(workoutStart: s.start, workoutEnd: s.end)
+        }
+
+        let fallbackStart = cal.date(bySettingHour: 14, minute: 30, second: 0, of: selectedDate) ?? Date()
+        return PeriWorkoutEngine.evaluatePhase(workoutStart: fallbackStart, workoutEnd: fallbackStart.addingTimeInterval(7200))
     }
 
     public var workoutFuelReport: WorkoutFuelReport {
@@ -451,6 +814,8 @@ public final class AppContainer: ObservableObject {
     }
 
     public func exportCSV() -> String {
+        let items = Dictionary(uniqueKeysWithValues: (plan.template(for: selectedDate, selectedTemplateName: selectedTemplateKey)?.items ?? []).map { ($0.id, $0) })
+        let macros = CalorieEngine.consumedMacros(entries: logEntries, items: items)
         let record = DailyReportRecord(
             dateString: {
                 let f = DateFormatter()
@@ -458,12 +823,12 @@ public final class AppContainer: ObservableObject {
                 return f.string(from: selectedDate)
             }(),
             templateKey: selectedTemplateKey,
-            kcalConsumed: energyBalance?.consumedKcal ?? 2250.0,
+            kcalConsumed: energyBalance?.consumedKcal ?? macros.kcal,
             kcalBurned: energyBalance?.projectedOut ?? 2700.0,
             balanceKcal: energyBalance?.projectedBalance ?? -450.0,
-            proteinGrams: 195.0,
-            carbsGrams: 220.0,
-            fatGrams: 55.0,
+            proteinGrams: macros.protein,
+            carbsGrams: macros.carbs,
+            fatGrams: macros.fat,
             waterMl: waterIntakeMl,
             sleepHours: Double(sleepEntries.first?.asleepMinutes ?? 450) / 60.0,
             sleepRecoveryScore: sleepEntries.first?.recoveryScore ?? 85,
@@ -473,6 +838,8 @@ public final class AppContainer: ObservableObject {
     }
 
     public func exportCoachSummary() -> String {
+        let items = Dictionary(uniqueKeysWithValues: (plan.template(for: selectedDate, selectedTemplateName: selectedTemplateKey)?.items ?? []).map { ($0.id, $0) })
+        let macros = CalorieEngine.consumedMacros(entries: logEntries, items: items)
         let record = DailyReportRecord(
             dateString: {
                 let f = DateFormatter()
@@ -480,12 +847,12 @@ public final class AppContainer: ObservableObject {
                 return f.string(from: selectedDate)
             }(),
             templateKey: selectedTemplateKey,
-            kcalConsumed: energyBalance?.consumedKcal ?? 2250.0,
+            kcalConsumed: energyBalance?.consumedKcal ?? macros.kcal,
             kcalBurned: energyBalance?.projectedOut ?? 2700.0,
             balanceKcal: energyBalance?.projectedBalance ?? -450.0,
-            proteinGrams: 195.0,
-            carbsGrams: 220.0,
-            fatGrams: 55.0,
+            proteinGrams: macros.protein,
+            carbsGrams: macros.carbs,
+            fatGrams: macros.fat,
             waterMl: waterIntakeMl,
             sleepHours: Double(sleepEntries.first?.asleepMinutes ?? 450) / 60.0,
             sleepRecoveryScore: sleepEntries.first?.recoveryScore ?? 85,

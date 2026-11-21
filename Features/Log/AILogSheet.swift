@@ -3,6 +3,9 @@ import SwiftUI
 #if canImport(OrchardDomain)
 import OrchardDomain
 #endif
+#if canImport(OrchardServices)
+import OrchardServices
+#endif
 
 /// AI-powered Quick Meal Log Sheet estimating calories and macronutrients from natural language.
 public struct AILogSheet: View {
@@ -11,6 +14,7 @@ public struct AILogSheet: View {
 
     @State private var inputText: String = ""
     @State private var isEstimating: Bool = false
+    @State private var errorMessage: String? = nil
 
     // Editable Estimated Results
     @State private var estimatedTitle: String = ""
@@ -22,10 +26,10 @@ public struct AILogSheet: View {
     @State private var hasEstimated: Bool = false
 
     private let suggestions = [
-        "3 καλαμάκια κοτόπουλο με σαλάτα και 1 πίτα",
-        "1 γιαούρτι 2% με 1 κ.σ. μέλι και 30g καρύδια",
-        "200g σολομός ψητός με 150g ρύζι και μπρόκολο",
-        "Ομελέτα 3 αυγά με 50g τυρί φέτα και 1 φέτα ψωμί"
+        "Ομελέτα Βρώμης (4 ασπράδια, 1 κρόκος, 40g βρώμη)",
+        "Tupper #1: 200g σολομός ψητός με 150g κινόα και μπρόκολο",
+        "Sandwich με γαλοπούλα, ανθότυρο και 1 μπανάνα",
+        "500ml νερό + HIGH5 + BCAA + 20g Πρωτεΐνη AFTER"
     ]
 
     public init() {}
@@ -55,6 +59,22 @@ public struct AILogSheet: View {
                 VStack(spacing: 20) {
                     // Header Card
                     headerCard
+
+                    // Error Banner
+                    if let err = errorMessage {
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(OrchardColors.appleRed)
+                                .font(.system(size: 14))
+                            Text(err)
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .foregroundStyle(OrchardColors.appleRed)
+                            Spacer()
+                        }
+                        .padding(12)
+                        .background(OrchardColors.appleRed.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
 
                     // Natural Language Input Section
                     inputSection
@@ -196,57 +216,48 @@ public struct AILogSheet: View {
     }
 
     private func performEstimation() {
+        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
         Haptics.selection()
         isEstimating = true
+        errorMessage = nil
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            let lower = inputText.lowercased()
-            let title: String
-            let k: Double
-            let p: Double
-            let c: Double
-            let f: Double
+        Task {
+            do {
+                let service = AICoachService.makeLive()
+                let response = try await service.estimateQuickFood(
+                    trimmed,
+                    plan: container.plan,
+                    snapshot: container.makeAICoachSnapshot()
+                )
 
-            if lower.contains("καλαμάκ") || lower.contains("σουβλάκ") {
-                title = "3 Καλαμάκια κοτόπουλο με σαλάτα & 1 πίτα"
-                k = 660
-                p = 52
-                c = 48
-                f = 28
-            } else if lower.contains("γιαούρτ") {
-                title = "Γιαούρτι 2% με μέλι & καρύδια"
-                k = 340
-                p = 18
-                c = 32
-                f = 16
-            } else if lower.contains("σολομ") {
-                title = "Σολομός ψητός με καστανό ρύζι & μπρόκολο"
-                k = 620
-                p = 46
-                c = 54
-                f = 24
-            } else if lower.contains("ομελέτ") || lower.contains("αυγ") {
-                title = "Ομελέτα 3 αυγά με φέτα & ψωμί"
-                k = 480
-                p = 32
-                c = 22
-                f = 30
-            } else {
-                title = inputText.capitalized
-                k = 500
-                p = 35
-                c = 45
-                f = 20
+                await MainActor.run {
+                    if let first = response.suggestedActions.first {
+                        self.estimatedTitle = first.title
+                        self.kcalString = first.kcal.map { "\(Int($0))" } ?? ""
+                        self.proteinString = first.protein.map { "\(Int($0))" } ?? ""
+                        self.carbsString = first.carbs.map { "\(Int($0))" } ?? ""
+                        self.fatString = first.fat.map { "\(Int($0))" } ?? ""
+                    } else {
+                        self.estimatedTitle = trimmed
+                        self.kcalString = ""
+                        self.proteinString = ""
+                        self.carbsString = ""
+                        self.fatString = ""
+                    }
+                    self.hasEstimated = true
+                    self.isEstimating = false
+                    Haptics.success()
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isEstimating = false
+                    self.hasEstimated = false
+                    Haptics.warning()
+                }
             }
-
-            self.estimatedTitle = title
-            self.kcalString = "\(Int(k))"
-            self.proteinString = "\(Int(p))"
-            self.carbsString = "\(Int(c))"
-            self.fatString = "\(Int(f))"
-            self.hasEstimated = true
-            self.isEstimating = false
-            Haptics.success()
         }
     }
 
@@ -388,30 +399,15 @@ public struct AILogSheet: View {
         let f = Double(fatString)
 
         let title = estimatedTitle.trimmingCharacters(in: .whitespaces).isEmpty ? "AI Meal" : estimatedTitle
-        let entryId = UUID()
-        let entry = LogEntry(
-            id: entryId,
-            eventKey: "ai_\(entryId.uuidString.prefix(8))",
-            itemId: "ai_\(entryId.uuidString.prefix(8))",
-            status: .done,
-            timestamp: Date(),
+        _ = container.addManualLog(
+            title: title,
+            type: .meal,
             kcal: k,
             protein: p,
             carbs: c,
             fat: f,
-            source: .ai(provider: "on-device"),
-            note: title
+            source: .ai(provider: "gemini")
         )
-
-        container.logEntries.append(entry)
-        container.biteCount += 1
-        container.refreshSchedule()
-
-        // Sync with HealthStore
-        let store = container.healthStore
-        Task {
-            try? await store.writeDietaryLog(entry, item: nil)
-        }
 
         Haptics.success()
         dismiss()

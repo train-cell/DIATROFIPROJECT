@@ -8,6 +8,19 @@ public enum SliceState: String, Codable, Equatable, Sendable, CaseIterable {
     case overdue
 }
 
+/// Completion progress tracking for mandatory scheduled supplements.
+public struct SupplementProgress: Codable, Equatable, Sendable {
+    public let completed: Int
+    public let total: Int
+    public var isCompleted: Bool
+
+    public init(completed: Int, total: Int, isCompleted: Bool? = nil) {
+        self.completed = completed
+        self.total = total
+        self.isCompleted = isCompleted ?? (total > 0 ? completed >= total : true)
+    }
+}
+
 /// A slice of the Apple representing an individual meal's contribution to daily nutrition.
 public struct AppleSlice: Codable, Equatable, Sendable, Identifiable {
     public var id: String
@@ -145,6 +158,11 @@ public struct AppleProgress: Codable, Equatable, Sendable {
             // Find most relevant log entry
             let matchingLog = logsByEvent[event.id]?.last ?? logsByItem[event.itemId]?.last
 
+            // Unlogged optional items do NOT enter mandatory slices or overdue
+            if event.item.isOptional == true && matchingLog == nil {
+                continue
+            }
+
             let state: SliceState
             let actualKcal: Double?
 
@@ -154,6 +172,9 @@ public struct AppleProgress: Codable, Equatable, Sendable {
                     state = .eaten
                     actualKcal = log.kcal ?? event.item.kcal ?? 0.0
                 case .skipped:
+                    if event.item.isOptional == true {
+                        continue
+                    }
                     state = .skipped
                     actualKcal = 0.0
                 case .partial(let fraction):
@@ -165,6 +186,9 @@ public struct AppleProgress: Codable, Equatable, Sendable {
                         let baseKcal = log.kcal ?? event.item.kcal ?? 0.0
                         actualKcal = baseKcal * fraction
                     } else {
+                        if event.item.isOptional == true {
+                            continue
+                        }
                         state = .pending
                         actualKcal = 0.0
                     }
@@ -182,7 +206,8 @@ public struct AppleProgress: Codable, Equatable, Sendable {
             rawSlices.append((event: event, state: state, actualKcal: actualKcal))
         }
 
-        let totalPlanned = rawSlices.reduce(0.0) { $0 + max(0.0, $1.event.item.kcal ?? 0.0) }
+        let mandatoryPlanned = mealEvents.filter { $0.item.isOptional != true }.reduce(0.0) { $0 + max(0.0, $1.item.kcal ?? 0.0) }
+        let totalPlanned = mandatoryPlanned > 0 ? mandatoryPlanned : rawSlices.reduce(0.0) { $0 + max(0.0, $1.event.item.kcal ?? 0.0) }
         let totalWeight = totalPlanned > 0 ? totalPlanned : Double(rawSlices.count)
 
         var runningAngle = 0.0
@@ -212,10 +237,51 @@ public struct AppleProgress: Codable, Equatable, Sendable {
             computedSlices.append(slice)
         }
 
+        let totalEaten = rawSlices.filter { $0.state == .eaten }.reduce(0.0) {
+            $0 + ($1.actualKcal ?? $1.event.item.kcal ?? 0.0)
+        }
+
         return AppleProgress(
             slices: computedSlices,
             totalPlannedKcal: totalPlanned,
-            totalEatenKcal: nil // will be computed from slices
+            totalEatenKcal: totalEaten
+        )
+    }
+
+    /// Pure calculation of supplement completion progress from mandatory .supplement events.
+    public static func calculateSupplements(
+        events: [ScheduledEvent],
+        logEntries: [LogEntry]
+    ) -> SupplementProgress {
+        let mandatorySuppEvents = events.filter { $0.item.type == .supplement && $0.item.isOptional != true }
+        guard !mandatorySuppEvents.isEmpty else {
+            return SupplementProgress(completed: 0, total: 0, isCompleted: true)
+        }
+
+        let logsByItem = Dictionary(grouping: logEntries, by: { $0.itemId })
+        let logsByEvent = Dictionary(grouping: logEntries, by: { $0.eventKey })
+
+        var completedCount = 0
+        for event in mandatorySuppEvents {
+            let matchingLog = logsByEvent[event.id]?.last ?? logsByItem[event.itemId]?.last
+            if let log = matchingLog {
+                switch log.status {
+                case .done, .swapped:
+                    completedCount += 1
+                case .partial(let fraction):
+                    if fraction >= 1.0 {
+                        completedCount += 1
+                    }
+                case .skipped:
+                    break
+                }
+            }
+        }
+
+        return SupplementProgress(
+            completed: completedCount,
+            total: mandatorySuppEvents.count,
+            isCompleted: completedCount >= mandatorySuppEvents.count
         )
     }
 }

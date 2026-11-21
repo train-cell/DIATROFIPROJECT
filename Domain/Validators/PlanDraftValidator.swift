@@ -7,12 +7,15 @@ public struct PlanDraftValidator {
     public static func validate(plan: Plan) -> ValidationResult {
         var reasons: [String] = []
 
-        // 1. Settings time formats
+        // 1. Settings time formats & hydration target
         if !isValidTime(plan.settings.wake) {
             reasons.append("Invalid wake time format: '\(plan.settings.wake)'. Must be HH:mm")
         }
         if !isValidTime(plan.settings.bed) {
             reasons.append("Invalid bed time format: '\(plan.settings.bed)'. Must be HH:mm")
+        }
+        if plan.settings.targetWaterMl <= 0 {
+            reasons.append("Settings targetWaterMl must be greater than 0: \(plan.settings.targetWaterMl)")
         }
 
         // 2. Templates existence
@@ -22,6 +25,10 @@ public struct PlanDraftValidator {
 
         // 3. Template item consistency
         for (templateName, template) in plan.templates {
+            if let tw = template.targetWaterMl, tw <= 0 {
+                reasons.append("Template '\(templateName)' targetWaterMl must be greater than 0: \(tw)")
+            }
+
             var itemIds: Set<String> = []
 
             for item in template.items {
@@ -47,6 +54,29 @@ public struct PlanDraftValidator {
                 // Absolute anchor time format check
                 if case .absolute(let time) = item.anchor, !isValidTime(time) {
                     reasons.append("Template '\(templateName)' item '\(item.id)' has invalid absolute time: '\(time)'")
+                }
+
+                // Plan options validation
+                if let options = item.options, !options.isEmpty {
+                    var optionIds: Set<String> = []
+                    var optionTitles: Set<String> = []
+                    for option in options {
+                        if option.id.trimmingCharacters(in: .whitespaces).isEmpty {
+                            reasons.append("Template '\(templateName)' item '\(item.id)' contains an option with an empty ID")
+                        }
+                        if option.title.trimmingCharacters(in: .whitespaces).isEmpty {
+                            reasons.append("Template '\(templateName)' item '\(item.id)' option '\(option.id)' has an empty title")
+                        }
+                        if optionIds.contains(option.id) {
+                            reasons.append("Template '\(templateName)' item '\(item.id)' contains duplicate option ID: '\(option.id)'")
+                        }
+                        optionIds.insert(option.id)
+
+                        if optionTitles.contains(option.title) {
+                            reasons.append("Template '\(templateName)' item '\(item.id)' contains duplicate option title: '\(option.title)'")
+                        }
+                        optionTitles.insert(option.title)
+                    }
                 }
             }
 

@@ -33,6 +33,7 @@ public struct LogView: View {
     @State private var selectedEventId: String? = nil
     @State private var showSuccessBanner: Bool = false
     @State private var showAISheet: Bool = false
+    @State private var showAICoachChat: Bool = false
     @State private var showStaplesSheet: Bool = false
     @State private var showRecipeSheet: Bool = false
     @State private var showDigestiveSheet: Bool = false
@@ -42,23 +43,33 @@ public struct LogView: View {
     private var suggestions: [String] {
         switch category {
         case .meal:
-            return ["Πρωινό", "Μεσημεριανό", "Βραδινό", "Κοτόπουλο & Ρύζι", "Ομελέτα"]
+            return ["Πρωινό (Υγρά & Στερεά)", "Ομελέτα Βρώμης", "Sandwich", "Tupper #1", "Tupper #2", "Ελαφρύ Γεύμα", "Κυρίως Γεύμα"]
         case .supplement:
-            return ["Κρεατίνη (5g)", "Πρωτεΐνη Whey (30g)", "Πολυβιταμίνη", "Ωμέγα 3", "Ηλεκτρολύτες", "Μαγνήσιο", "Βιταμίνη D3", "Σκόνη Νερού (Bolero)"]
+            return ["500ml HIGH5 + BCAA (500ml)", "Πρωτεΐνη AFTER (20g)", "Πρωτεΐνη AFTER (30g)", "V2000 SOLGAR", "FERRO SANOL 100mg", "Βιταμίνη C 500", "SUPERAMIN (1g)", "EVIOL (2 κάψουλες)", "Γλουταμίνη (1 scoop)", "Solumag (1 φιαλίδιο)"]
         case .snack:
-            return ["Μπανάνα", "Γιαούρτι 2% με μέλι", "Ξηροί καρποί (30g)", "Ρυζογκοφρέτες"]
+            return ["Μπανάνα", "Γιαούρτι 2% με μέλι", "Ξηροί καρποί (30g)", "Ρυζογκοφρέτες", "Φρυγανιές με ταχίνι"]
         }
     }
 
     private func selectSuggestion(_ item: String) {
         title = item
         if category == .supplement {
-            if item.contains("Πρωτεΐνη") || item.contains("Whey") {
-                kcalString = "120"
-                proteinString = "25"
-                carbsString = "2"
+            if item.contains("Πρωτεΐνη AFTER (30g)") {
+                kcalString = "115"
+                proteinString = "27"
+                carbsString = "1"
                 fatString = "1"
-            } else if item.contains("Κρεατίνη") || item.contains("Ωμέγα") || item.contains("Βιταμίνη") || item.contains("Ηλεκτρολύτες") || item.contains("Μαγνήσιο") || item.contains("Πολυβιταμίνη") || item.contains("Bolero") || item.contains("Σκόνη") {
+            } else if item.contains("Πρωτεΐνη AFTER (20g)") {
+                kcalString = "77"
+                proteinString = "18"
+                carbsString = "1"
+                fatString = "0"
+            } else if item.contains("HIGH5") {
+                kcalString = "10"
+                proteinString = "2"
+                carbsString = "1"
+                fatString = "0"
+            } else {
                 kcalString = "0"
                 proteinString = "0"
                 carbsString = "0"
@@ -87,41 +98,73 @@ public struct LogView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                     }
 
-                    // AI Quick Banner
-                    Button {
-                        Haptics.selection()
-                        showAISheet = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(OrchardColors.appleRed.opacity(0.15))
-                                    .frame(width: 38, height: 38)
-                                Image(systemName: "wand.and.stars")
-                                    .font(.system(size: 17, weight: .bold))
-                                    .foregroundStyle(OrchardColors.appleRed)
-                            }
+                    // AI Nutrition Coach & Quick Banner
+                    VStack(spacing: 8) {
+                        Button {
+                            Haptics.selection()
+                            showAICoachChat = true
+                        } label: {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.purple.opacity(0.15))
+                                        .frame(width: 40, height: 40)
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 18, weight: .bold))
+                                        .foregroundStyle(Color.purple)
+                                }
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Καταγραφή με AI 🪄")
-                                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                                    .foregroundStyle(OrchardColors.text)
-                                Text("Πληκτρολόγησε ελεύθερα για άμεση εκτίμηση")
-                                    .font(.system(size: 11, design: .rounded))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 6) {
+                                        Text("AI Nutrition Coach ✨")
+                                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                                            .foregroundStyle(OrchardColors.text)
+                                        Text("Gemini BYOK")
+                                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 1)
+                                            .background(Color.purple.opacity(0.12))
+                                            .foregroundStyle(Color.purple)
+                                            .clipShape(Capsule())
+                                    }
+                                    Text("Συνομιλία, συμβουλές & 1-tap αυτόματη καταγραφή")
+                                        .font(.system(size: 11, design: .rounded))
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .semibold))
                                     .foregroundStyle(.secondary)
                             }
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(.secondary)
+                            .padding(12)
+                            .background(Color.purple.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
-                        .padding(12)
-                        .background(OrchardColors.appleRed.opacity(0.08))
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .buttonStyle(.plain)
+
+                        HStack {
+                            Spacer()
+                            Button {
+                                Haptics.selection()
+                                showAISheet = true
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "wand.and.stars")
+                                        .font(.system(size: 11))
+                                    Text("Γρήγορη Εκτίμηση Θερμίδων 🪄")
+                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .background(Color.secondary.opacity(0.10))
+                                .foregroundStyle(OrchardColors.text)
+                                .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                    .buttonStyle(.plain)
 
                     // 12-Features Quick Access: Staples / Barcode / Recipe / Digestion
                     HStack(spacing: 8) {
@@ -203,18 +246,40 @@ public struct LogView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Haptics.selection()
-                        showAISheet = true
-                    } label: {
-                        HStack(spacing: 3) {
-                            Image(systemName: "wand.and.stars")
-                            Text("AI")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                    HStack(spacing: 10) {
+                        Button {
+                            Haptics.selection()
+                            showAICoachChat = true
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "sparkles")
+                                Text("Coach ✨")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                            }
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(Color.purple.opacity(0.15))
+                            .foregroundStyle(Color.purple)
+                            .clipShape(Capsule())
                         }
-                        .foregroundStyle(OrchardColors.appleRed)
+                        .buttonStyle(.plain)
+
+                        Button {
+                            Haptics.selection()
+                            showAISheet = true
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: "wand.and.stars")
+                                Text("AI")
+                                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                            }
+                            .foregroundStyle(OrchardColors.appleRed)
+                        }
                     }
                 }
+            }
+            .sheet(isPresented: $showAICoachChat) {
+                AICoachChatView()
             }
             .sheet(isPresented: $showAISheet) {
                 AILogSheet()

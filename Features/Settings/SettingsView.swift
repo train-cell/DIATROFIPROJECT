@@ -46,6 +46,9 @@ public struct SettingsView: View {
     public var body: some View {
         NavigationStack {
             Form {
+                // 0. Personal Plan & Features Section
+                personalPlanAndFeaturesSection
+
                 // 1. 7-Day Signing Expiry Banner Section
                 signingGuardSection
 
@@ -87,6 +90,76 @@ public struct SettingsView: View {
                     apiKey = savedKey
                 }
                 UserDefaults.standard.removeObject(forKey: "orchard_ai_api_key")
+            }
+        }
+    }
+
+    // MARK: - 0. Personal Plan & Features Section
+    private var personalPlanAndFeaturesSection: some View {
+        Section(header: Text("ΠΡΟΣΩΠΙΚΟ ΠΡΟΓΡΑΜΜΑ & ΛΕΙΤΟΥΡΓΙΕΣ")) {
+            // Summary of active plan
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(container.plan.settings.planLabel ?? "Πρόγραμμα #1")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundStyle(OrchardColors.text)
+                    Spacer()
+                    if let sport = container.plan.settings.sport {
+                        Text(sport)
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(Color.blue.opacity(0.12))
+                            .foregroundStyle(Color.blue)
+                            .clipShape(Capsule())
+                    }
+                }
+
+                HStack(spacing: 12) {
+                    Label("Αφύπνιση: \(container.plan.settings.wake)", systemImage: "sun.max.fill")
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    Text("•").foregroundStyle(.secondary)
+
+                    Label(String(format: "Στόχος Νερού: %.1fL", container.targetWaterMl / 1000.0), systemImage: "drop.fill")
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundStyle(Color.cyan)
+                }
+            }
+            .padding(.vertical, 4)
+
+            // Toggle Fasting
+            Toggle("Διαλειμματική Νηστεία (Fasting)", isOn: $container.isFastingEnabled)
+                .tint(Color.purple)
+
+            if container.isFastingEnabled {
+                Picker("Πρωτόκολλο", selection: $container.fastingProtocol) {
+                    ForEach(FastingProtocol.allCases, id: \.self) { proto in
+                        Text(proto.titleGreek).tag(proto)
+                    }
+                }
+            }
+
+            // Toggle Goal Tracking & Coaching
+            Toggle("Στόχος Βάρους & Coaching", isOn: $container.isGoalTrackingEnabled)
+                .tint(OrchardColors.appleRed)
+
+            if container.isGoalTrackingEnabled {
+                Picker("Στόχος Coaching", selection: $container.coachingGoal) {
+                    ForEach(CoachingGoal.allCases, id: \.self) { goal in
+                        Text(goal.titleGreek).tag(goal)
+                    }
+                }
+
+                Stepper(value: $container.targetGoalWeightKg, in: 40.0...150.0, step: 0.5) {
+                    HStack {
+                        Text("Στόχος Βάρους:")
+                        Spacer()
+                        Text(String(format: "%.1f kg", container.targetGoalWeightKg))
+                            .fontWeight(.bold)
+                    }
+                }
             }
         }
     }
