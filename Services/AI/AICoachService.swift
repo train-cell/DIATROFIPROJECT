@@ -30,17 +30,20 @@ public final class AICoachService: @unchecked Sendable {
 
     private let router: LLMRouter
     private let requiresAPIKey: Bool
+    private let explicitAPIKey: String?
 
-    public init(router: LLMRouter, requiresKey: Bool = false) {
+    public init(router: LLMRouter, requiresKey: Bool = false, explicitAPIKey: String? = nil) {
         self.router = router
         self.requiresAPIKey = requiresKey
+        self.explicitAPIKey = explicitAPIKey
     }
 
     /// Default live production factory configuring BYOK Gemini with fallback chain.
     public static func makeLive(apiKeyOverride: String? = nil) -> AICoachService {
         let key: String? = {
             if let explicit = apiKeyOverride {
-                return explicit.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : explicit
+                let trimmed = explicit.trimmingCharacters(in: .whitespacesAndNewlines)
+                return trimmed.isEmpty ? nil : trimmed
             }
             let stored = KeychainStore.shared.getAPIKey()?.trimmingCharacters(in: .whitespacesAndNewlines)
             return (stored != nil && !stored!.isEmpty) ? stored : nil
@@ -49,7 +52,7 @@ public final class AICoachService: @unchecked Sendable {
         let preferred = UserDefaults.standard.string(forKey: "orchard_gemini_preferred_model") ?? "auto"
         let gemini = GeminiLLMProvider(apiKey: key, preferredModel: preferred)
         let router = LLMRouter(gemini: gemini, appleOnDevice: nil, cloud: nil, mock: nil)
-        return AICoachService(router: router, requiresKey: true)
+        return AICoachService(router: router, requiresKey: true, explicitAPIKey: key)
     }
 
     /// Sends a conversational user message, incorporating chat history and full plan context.
@@ -130,7 +133,7 @@ public final class AICoachService: @unchecked Sendable {
             throw AICoachError.aiDisabled
         }
         if requiresAPIKey {
-            let key = KeychainStore.shared.getAPIKey()?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let key = explicitAPIKey ?? KeychainStore.shared.getAPIKey()?.trimmingCharacters(in: .whitespacesAndNewlines)
             if key == nil || key!.isEmpty {
                 throw AICoachError.missingAPIKey
             }

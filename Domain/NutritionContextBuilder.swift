@@ -5,7 +5,11 @@ public enum NutritionContextBuilder {
 
     /// Constructs a complete, highly structured system prompt in Greek embedding the entire
     /// nutrition protocol and the athlete's real-time daily progress.
-    public static func buildSystemPrompt(plan: Plan, snapshot: AICoachDailySnapshot) -> String {
+    public static func buildSystemPrompt(
+        plan: Plan,
+        snapshot: AICoachDailySnapshot,
+        timeZone: TimeZone = .current
+    ) -> String {
         var lines: [String] = []
 
         // 1. Role & Athlete Persona
@@ -69,7 +73,7 @@ public enum NutritionContextBuilder {
             for event in snapshot.resolvedEvents {
                 let isLogged = snapshot.logEntries.contains { ($0.itemId == event.itemId || $0.eventKey == event.id) && $0.status == .done }
                 let statusMark = isLogged ? "✅ [ΚΑΤΑΓΕΓΡΑΜΜΕΝΟ]" : "⏳ [ΕΚΚΡΕΜΕΙ]"
-                let timeStr = formatTime(event.resolvedTime)
+                let timeStr = formatTime(event.resolvedTime, timeZone: timeZone)
                 let item = event.item
                 var details = "\(statusMark) \(timeStr) - [\(item.id)] \(item.title)"
                 if let w = item.waterMl, w > 0 {
@@ -142,10 +146,10 @@ public enum NutritionContextBuilder {
         return lines.joined(separator: "\n")
     }
 
-    private static func formatTime(_ date: Date) -> String {
+    private static func formatTime(_ date: Date, timeZone: TimeZone) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.timeZone = timeZone
         return formatter.string(from: date)
     }
 }

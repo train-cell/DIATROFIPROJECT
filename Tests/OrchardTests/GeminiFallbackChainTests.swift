@@ -102,7 +102,9 @@ final class GeminiFallbackChainTests: XCTestCase {
     func testImmediateSuccessOnFirstModel() async throws {
         let models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
         GeminiMockURLProtocol.requestHandlers["gemini-2.5-flash"] = { req in
-            self.makeSuccessResponse(url: req.url!, json: "{\"meal\": \"Chicken\", \"calories\": 450}")
+            XCTAssertEqual(req.value(forHTTPHeaderField: "x-goog-api-key"), "AIzaSy_TEST_KEY", "API key must be sent via x-goog-api-key header")
+            XCTAssertFalse(req.url?.absoluteString.contains("AIzaSy_TEST_KEY") ?? true, "API key must NOT leak into URL query string")
+            return self.makeSuccessResponse(url: req.url!, json: "{\"meal\": \"Chicken\", \"calories\": 450}")
         }
 
         let provider = GeminiLLMProvider(

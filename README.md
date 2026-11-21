@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Architecture-Clean_Domain_/_Offline--First-34C759?style=flat-square" alt="Clean Architecture" />
   <img src="https://img.shields.io/badge/AI_Coach-Gemini_BYOK_(12--Model_Fallback)-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini BYOK" />
   <img src="https://img.shields.io/badge/Wearable-Apple_Watch_Ultra_3_/_HealthKit-FF2D55?style=flat-square&logo=apple-watch&logoColor=white" alt="Apple Watch HealthKit" />
-  <img src="https://img.shields.io/badge/Tests-187_Xcode_/_172_SwiftPM_Passing-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-188_Xcode_/_173_SwiftPM_Passing-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="MIT License" />
 </p>
 
@@ -168,7 +168,7 @@ The-DIAtrofi-Project/
 │   ├── Security/                    # SigningGuard (embedded.mobileprovision parser)
 │   └── Telemetry/                   # Zero-knowledge local JSONL telemetry & rotation
 ├── Resources/                       # Assets, Localizable.xcstrings, plan.sample.json
-├── Tests/OrchardTests/              # 187 Xcode / 172 SwiftPM Automated Tests
+├── Tests/OrchardTests/              # 188 Xcode / 173 SwiftPM Automated Tests
 │   ├── AICoachDomainTests.swift     # Context builder, validator, and service tests
 │   ├── BackendTotalAuditTests.swift # End-to-end integration, schedule matrices & persistence
 │   ├── NewNutritionProtocolTests.swift # Modular menu options, shakes, and weekday filters
@@ -198,8 +198,8 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test \
 ```
 
 ### Test Metrics:
-* **SwiftPM Tests:** **172 passed** (0 failures, ~0.15s execution)
-* **Xcode Simulator Tests:** **187 passed** (0 failures, ~1.15s execution)
+* **SwiftPM Tests:** **173 passed** (0 failures, ~0.15s execution)
+* **Xcode Simulator Tests:** **188 passed** (0 failures, ~1.15s execution)
 * **XCUITest Flows:** **7 complete flows** (Hydration, Day Mode switching, Menu Picker, Plan inspection, Protocol suggestions, Settings toggles, and AI Coach Chat interaction)
 * **Schedule Resolution Matrix:** 35 combination matrix (7 weekdays $\times$ 5 day modes) verified with 0 meal-gap conflicts.
 

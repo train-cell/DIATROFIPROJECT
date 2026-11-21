@@ -397,7 +397,7 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
         systemPrompt: String,
         schema: T.Type
     ) async throws -> T {
-        let endpointString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)"
+        let endpointString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: endpointString) else {
             throw GeminiModelError(statusCode: nil, message: "Invalid URL for model \(model)", isFatalAuthError: false)
         }
@@ -405,6 +405,7 @@ public struct GeminiLLMProvider: LLMProvider, @unchecked Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
         request.timeoutInterval = 20.0
 
         let fullPrompt = """

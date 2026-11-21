@@ -63,4 +63,27 @@ final class TelemetryServiceTests: XCTestCase {
         let eventsAfterClear = await service.getRecentEvents(limit: 10)
         XCTAssertEqual(eventsAfterClear.count, 0)
     }
+
+    func testTelemetryRespectsDisabledSettingsToggle() async throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer {
+            UserDefaults.standard.removeObject(forKey: "orchard_telemetry_enabled")
+            try? FileManager.default.removeItem(at: tempDir)
+        }
+
+        let logFile = tempDir.appendingPathComponent("telemetry_disabled.jsonl")
+        let service = TelemetryService(fileURL: logFile)
+
+        UserDefaults.standard.set(false, forKey: "orchard_telemetry_enabled")
+        await service.log(event: .appLaunched)
+
+        let eventsWhileDisabled = await service.getRecentEvents(limit: 10)
+        XCTAssertEqual(eventsWhileDisabled.count, 0, "Telemetry must NOT log when orchard_telemetry_enabled is false")
+
+        UserDefaults.standard.set(true, forKey: "orchard_telemetry_enabled")
+        await service.log(event: .appLaunched)
+        let eventsWhileEnabled = await service.getRecentEvents(limit: 10)
+        XCTAssertEqual(eventsWhileEnabled.count, 1)
+    }
 }
