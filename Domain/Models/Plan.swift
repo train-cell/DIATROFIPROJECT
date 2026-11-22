@@ -1,15 +1,52 @@
 import Foundation
 
-/// Core settings for sleep times and meal intervals.
+/// Core settings for sleep times, meal intervals, and hydration targets.
 public struct PlanSettings: Codable, Equatable, Sendable {
     public var wake: String                 // "HH:mm", e.g. "07:30"
     public var bed: String                  // "HH:mm", e.g. "23:30"
     public var minMealGapMinutes: Int       // e.g. 90 minutes
+    public var targetWaterMl: Double        // default 3000.0
+    public var minWaterMl: Double?          // e.g. 2500.0
+    public var sport: String?               // e.g. "Τεχνική Κολύμβηση"
+    public var planLabel: String?           // e.g. "Πρόγραμμα #1 (11.11.26)"
 
-    public init(wake: String, bed: String, minMealGapMinutes: Int = 90) {
+    public init(
+        wake: String,
+        bed: String,
+        minMealGapMinutes: Int = 90,
+        targetWaterMl: Double = 3000.0,
+        minWaterMl: Double? = nil,
+        sport: String? = nil,
+        planLabel: String? = nil
+    ) {
         self.wake = wake
         self.bed = bed
         self.minMealGapMinutes = minMealGapMinutes
+        self.targetWaterMl = targetWaterMl
+        self.minWaterMl = minWaterMl
+        self.sport = sport
+        self.planLabel = planLabel
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case wake
+        case bed
+        case minMealGapMinutes
+        case targetWaterMl
+        case minWaterMl
+        case sport
+        case planLabel
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.wake = try container.decode(String.self, forKey: .wake)
+        self.bed = try container.decode(String.self, forKey: .bed)
+        self.minMealGapMinutes = try container.decodeIfPresent(Int.self, forKey: .minMealGapMinutes) ?? 90
+        self.targetWaterMl = try container.decodeIfPresent(Double.self, forKey: .targetWaterMl) ?? 3000.0
+        self.minWaterMl = try container.decodeIfPresent(Double.self, forKey: .minWaterMl)
+        self.sport = try container.decodeIfPresent(String.self, forKey: .sport)
+        self.planLabel = try container.decodeIfPresent(String.self, forKey: .planLabel)
     }
 }
 

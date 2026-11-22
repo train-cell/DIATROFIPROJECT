@@ -3,6 +3,9 @@ import SwiftUI
 #if canImport(OrchardDomain)
 import OrchardDomain
 #endif
+#if canImport(OrchardServices)
+import OrchardServices
+#endif
 
 /// AI Plan Importer Sheet allowing users to paste raw diet text from a nutritionist or PDF,
 /// preview the parsed plan with diffs, and save it upon explicit user confirmation.
@@ -12,17 +15,19 @@ public struct PlanImportSheet: View {
 
     @State private var rawText: String = ""
     @State private var isAnalyzing: Bool = false
+    @State private var errorMessage: String? = nil
     @State private var parsedTemplates: [String: DayTemplate]? = nil
     @State private var showConfirmAlert: Bool = false
 
     private let sampleNutritionistDiet = """
-    ΗΜΕΡΑ 1 (Προπόνηση 17:30 - 90')
-    - 10:30 Πρωινό: 1 φλ. γάλα 1.5%, 1 αραβική ολικής, 2 φέτες τυρί χαμηλών λιπαρών (380 kcal, 26g P, 45g C, 10g F)
-    - 12:00 Δεκατιανό: 1 μήλο + 1 μικρό κουλούρι Θεσ/κης (260 kcal, 6g P, 52g C, 4g F)
-    - 12:30 Ενδιάμεσο: 2 ρυζογκοφρέτες με 2 κ.γλ. μέλι (130 kcal, 2g P, 30g C, 1g F)
-    - 19:15 Μεταπροπονητικό: 1 φλ. γάλα 1.5% + 1 scoop whey (240 kcal, 32g P, 18g C, 3g F)
-    - 20:30 Κυρίως Γεύμα: 200g κοτόπουλο φιλέτο, 150g καστανό ρύζι, πράσινη σαλάτα (680 kcal, 54g P, 65g C, 14g F)
-    - 22:30 Επιπλέον: 1 αχλάδι + 12 ωμά αμύγδαλα (190 kcal, 5g P, 22g C, 11g F)
+    ΠΡΟΠΟΝΗΣΗ (Τεχνική Κολύμβηση 14:30 - 16:30)
+    - 10:30 Πρωινό: 400ml ρόφημα βρώμης, 1 κ.σ. ταχίνι με μέλι, 2 φέτες ψωμί τοστ, 2 αυγά βραστά (580 kcal, 28g P, 65g C, 22g F)
+    - 12:00 Ελαφρύ Γεύμα: Sandwich με 2 φέτες γαλοπούλα, ανθότυρο και 1 μπανάνα (380 kcal, 22g P, 58g C, 6g F)
+    - 11:45 Συμπλήρωμα: 500ml νερό + 1 μεζούρα HIGH5 ηλεκτρολύτες + BCAA + 20g Πρωτεΐνη AFTER + V2000 SOLGAR
+    - 16:30 Μεταπροπονητικό: 500ml HIGH5 + BCAA + 30g Πρωτεΐνη AFTER + 1 scoop γλουταμίνη
+    - 17:30 Κυρίως Γεύμα: Tupper #1 (200g σολομός ψητός, 150g κινόα, σαλάτα μπρόκολο με 1 κ.σ. ελαιόλαδο) (720 kcal, 48g P, 45g C, 38g F)
+    - 21:00 Βραδινό: Ομελέτα Βρώμης (4 ασπράδια, 1 κρόκος, 40g νιφάδες βρώμης) (320 kcal, 26g P, 30g C, 10g F)
+    - 23:30 Πριν τον ύπνο: 1 φιαλίδιο Solumag
     """
 
     public init() {}
@@ -33,6 +38,22 @@ public struct PlanImportSheet: View {
                 VStack(spacing: 20) {
                     // Header Instruction Banner
                     instructionBanner
+
+                    // Error Banner
+                    if let err = errorMessage {
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(OrchardColors.appleRed)
+                                .font(.system(size: 14))
+                            Text(err)
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .foregroundStyle(OrchardColors.appleRed)
+                            Spacer()
+                        }
+                        .padding(12)
+                        .background(OrchardColors.appleRed.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
 
                     // Text Editor Section
                     inputSection
@@ -157,85 +178,70 @@ public struct PlanImportSheet: View {
     }
 
     private func analyzeTextWithAI() {
+        let trimmed = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
         Haptics.selection()
         isAnalyzing = true
+        errorMessage = nil
 
-        // Simulate fast deterministic on-device AI parse
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            let parsedItems = [
-                PlanItem(
-                    id: "ai_breakfast",
-                    type: .meal,
-                    title: "Πρωινό: 1 φλ. γάλα 1.5%, 1 αραβική ολικής, 2 φέτες τυρί",
-                    anchor: .absolute(time: "10:30"),
-                    kcal: 380,
-                    protein: 26,
-                    carbs: 45,
-                    fat: 10
-                ),
-                PlanItem(
-                    id: "ai_snack1",
-                    type: .meal,
-                    title: "Δεκατιανό: 1 μήλο + 1 μικρό κουλούρι Θεσ/κης",
-                    anchor: .absolute(time: "12:00"),
-                    kcal: 260,
-                    protein: 6,
-                    carbs: 52,
-                    fat: 4
-                ),
-                PlanItem(
-                    id: "ai_snack2",
-                    type: .meal,
-                    title: "Ενδιάμεσο: 2 ρυζογκοφρέτες με 2 κ.γλ. μέλι",
-                    anchor: .absolute(time: "12:30"),
-                    kcal: 130,
-                    protein: 2,
-                    carbs: 30,
-                    fat: 1
-                ),
-                PlanItem(
-                    id: "ai_post",
-                    type: .meal,
-                    title: "Μεταπροπονητικό: 1 φλ. γάλα 1.5% + 1 scoop whey",
-                    anchor: .afterTraining(minutes: 30),
-                    kcal: 240,
-                    protein: 32,
-                    carbs: 18,
-                    fat: 3,
-                    fallbackTime: "19:15"
-                ),
-                PlanItem(
-                    id: "ai_main",
-                    type: .meal,
-                    title: "Κυρίως: 200g κοτόπουλο, 150g ρύζι, σαλάτα",
-                    anchor: .absolute(time: "20:30"),
-                    kcal: 680,
-                    protein: 54,
-                    carbs: 65,
-                    fat: 14
-                ),
-                PlanItem(
-                    id: "ai_extra",
-                    type: .meal,
-                    title: "Επιπλέον: 1 αχλάδι + 12 αμύγδαλα",
-                    anchor: .beforeSleep(minutes: 60),
-                    kcal: 190,
-                    protein: 5,
-                    carbs: 22,
-                    fat: 11,
-                    fallbackTime: "22:30"
+        let systemPrompt = """
+        Είσαι ειδικός αθλητικής διατροφής για το Orchard.
+        Ανάλυσε το παρακάτω πρόγραμμα διατροφής και εξήγαγε ένα έγκυρο DayTemplate σε JSON.
+        ΑΠΑΙΤΗΣΕΙΣ:
+        - title: "Προπόνηση"
+        - subtitle: περιγραφή
+        - icon: "figure.pool.swim"
+        - targetWaterMl: double (π.χ. 3000.0)
+        - order: 1
+        - items: λίστα από PlanItem με id, type ("meal" ή "supplement"), title, anchor (τύπου {"type": "absolute", "time": "10:30"} ή {"type": "afterTraining", "minutes": 30}), kcal, protein, carbs, fat, waterMl.
+        - trainingSessions: λίστα προπονήσεων
+        - rules: λίστα κανόνων
+        """
+
+        Task {
+            do {
+                let key = KeychainStore.shared.getAPIKey()?.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard key != nil && !key!.isEmpty else {
+                    throw AICoachError.missingAPIKey
+                }
+                let isEnabled = UserDefaults.standard.bool(forKey: "orchard_ai_enabled") || UserDefaults.standard.bool(forKey: "orchard.ai.is_enabled")
+                guard isEnabled else {
+                    throw AICoachError.aiDisabled
+                }
+
+                let preferred = UserDefaults.standard.string(forKey: "orchard_gemini_preferred_model") ?? "auto"
+                let gemini = GeminiLLMProvider(apiKey: key, preferredModel: preferred)
+                let router = LLMRouter(gemini: gemini, appleOnDevice: nil, cloud: nil, mock: nil)
+
+                let template: DayTemplate = try await router.generate(
+                    prompt: trimmed,
+                    systemPrompt: systemPrompt,
+                    schema: DayTemplate.self
                 )
-            ]
 
-            let template = DayTemplate(
-                trainingSessions: [TrainingSession(start: "17:30", durationMinutes: 90, estKcal: 650)],
-                items: parsedItems,
-                rules: [Rule(type: .prefer, text: "Επαρκής ενυδάτωση καθ' όλη τη διάρκεια της ημέρας")]
-            )
+                // Validate draft plan
+                var draftPlan = container.plan
+                draftPlan.templates["training"] = template
+                let report = PlanDraftValidator.validate(plan: draftPlan)
+                if !report.isValid {
+                    let errs = report.issues.joined(separator: "\n")
+                    throw AICoachError.underlying("Μη έγκυρο πρόγραμμα: \(errs)")
+                }
 
-            self.parsedTemplates = ["day_1": template]
-            self.isAnalyzing = false
-            Haptics.success()
+                await MainActor.run {
+                    self.parsedTemplates = ["training": template]
+                    self.isAnalyzing = false
+                    Haptics.success()
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isAnalyzing = false
+                    self.parsedTemplates = nil
+                    Haptics.warning()
+                }
+            }
         }
     }
 
@@ -333,7 +339,11 @@ public struct PlanImportSheet: View {
         for (key, tmpl) in templates {
             container.plan.templates[key] = tmpl
         }
-        container.refreshSchedule()
+        if container.plan.templates[container.selectedTemplateKey] == nil {
+            container.selectTemplate(key: templates.keys.sorted().first ?? "training")
+        } else {
+            container.refreshSchedule()
+        }
         Haptics.success()
         dismiss()
     }

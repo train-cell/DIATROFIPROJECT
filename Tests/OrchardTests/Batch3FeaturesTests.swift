@@ -120,7 +120,7 @@ final class Batch3FeaturesTests: XCTestCase {
         let summary = ReportExportEngine.generateCoachSummary(athleteName: "John Akrivos", records: records)
         XCTAssertTrue(summary.contains("Αθλητής: John Akrivos"))
         XCTAssertTrue(summary.contains("Μέση Ημερήσια Πρόσληψη: 2275 kcal"))
-        XCTAssertTrue(summary.contains("Μέση Ενυδάτωση: 4125 ml / 4000 ml"))
+        XCTAssertTrue(summary.contains("Μέση Ενυδάτωση: 4125 ml / 3000 ml"))
         XCTAssertTrue(summary.contains("Συνολική Συμμόρφωση Γευμάτων: 100%"))
     }
 }

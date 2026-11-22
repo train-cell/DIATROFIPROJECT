@@ -3,13 +3,13 @@ import XCTest
 
 final class HydrationTests: XCTestCase {
 
-    func testDefaultInitializationTarget4L() {
+    func testDefaultInitializationTarget3L() {
         let hydration = HydrationDay()
-        XCTAssertEqual(hydration.targetMl, 4000.0, "Daily water hydration target must strictly be 4.0 Liters (4000 ml)")
+        XCTAssertEqual(hydration.targetMl, 3000.0, "Daily water hydration target must strictly be 3.0 Liters (3000 ml)")
         XCTAssertEqual(hydration.consumedMl, 0.0)
-        XCTAssertEqual(hydration.litersTarget, 4.0)
+        XCTAssertEqual(hydration.litersTarget, 3.0)
         XCTAssertEqual(hydration.litersConsumed, 0.0)
-        XCTAssertEqual(hydration.remainingMl, 4000.0)
+        XCTAssertEqual(hydration.remainingMl, 3000.0)
         XCTAssertFalse(hydration.isGoalReached)
         XCTAssertEqual(hydration.percentage, 0)
         XCTAssertEqual(hydration.progressFraction, 0.0)
@@ -21,43 +21,44 @@ final class HydrationTests: XCTestCase {
         // Add 250ml (glass of water)
         hydration.add(ml: 250)
         XCTAssertEqual(hydration.consumedMl, 250.0)
-        XCTAssertEqual(hydration.remainingMl, 3750.0)
-        XCTAssertEqual(hydration.percentage, 6) // 250 / 4000 = 6.25% -> 6%
+        XCTAssertEqual(hydration.remainingMl, 2750.0)
+        XCTAssertEqual(hydration.percentage, 8) // 250 / 3000 = 8.33% -> 8%
 
         // Add 500ml (shaker / bottle)
         hydration.add(ml: 500)
         XCTAssertEqual(hydration.consumedMl, 750.0)
-        XCTAssertEqual(hydration.remainingMl, 3250.0)
-        XCTAssertEqual(hydration.percentage, 19) // 750 / 4000 = 18.75% -> 19%
+        XCTAssertEqual(hydration.remainingMl, 2250.0)
+        XCTAssertEqual(hydration.percentage, 25) // 750 / 3000 = 25%
 
         // Add 1000ml (1 Liter)
         hydration.add(ml: 1000)
         XCTAssertEqual(hydration.consumedMl, 1750.0)
-        XCTAssertEqual(hydration.remainingMl, 2250.0)
-        XCTAssertEqual(hydration.percentage, 44) // 1750 / 4000 = 43.75% -> 44%
+        XCTAssertEqual(hydration.remainingMl, 1250.0)
+        XCTAssertEqual(hydration.percentage, 58) // 1750 / 3000 = 58.33% -> 58%
 
-        // Add 500ml Bolero
+        // Add 500ml HIGH5 Shaker
         hydration.add(ml: 500)
         XCTAssertEqual(hydration.consumedMl, 2250.0)
-        XCTAssertEqual(hydration.percentage, 56) // 2250 / 4000 = 56.25% -> 56%
+        XCTAssertEqual(hydration.remainingMl, 750.0)
+        XCTAssertEqual(hydration.percentage, 75) // 2250 / 3000 = 75%
     }
 
     func testGoalAchievedAndClamping() {
-        var hydration = HydrationDay(targetMl: 4000.0, consumedMl: 3500.0)
+        var hydration = HydrationDay(targetMl: 3000.0, consumedMl: 2500.0)
         XCTAssertFalse(hydration.isGoalReached)
         XCTAssertEqual(hydration.remainingMl, 500.0)
 
-        // Reach exactly 4000ml
+        // Reach exactly 3000ml
         hydration.add(ml: 500.0)
         XCTAssertTrue(hydration.isGoalReached)
         XCTAssertEqual(hydration.remainingMl, 0.0)
         XCTAssertEqual(hydration.percentage, 100)
         XCTAssertEqual(hydration.progressFraction, 1.0)
 
-        // Exceed target (e.g. 4500ml)
+        // Exceed target (e.g. 3500ml)
         hydration.add(ml: 500.0)
-        XCTAssertEqual(hydration.consumedMl, 4500.0)
-        XCTAssertEqual(hydration.litersConsumed, 4.5)
+        XCTAssertEqual(hydration.consumedMl, 3500.0)
+        XCTAssertEqual(hydration.litersConsumed, 3.5)
         XCTAssertTrue(hydration.isGoalReached)
         XCTAssertEqual(hydration.remainingMl, 0.0, "Remaining water should clamp to 0 once target is exceeded")
         XCTAssertEqual(hydration.progressFraction, 1.0, "Progress fraction for UI gauges should be clamped at 1.0")
@@ -65,18 +66,18 @@ final class HydrationTests: XCTestCase {
     }
 
     func testResetHydration() {
-        var hydration = HydrationDay(targetMl: 4000.0, consumedMl: 2750.0)
+        var hydration = HydrationDay(targetMl: 3000.0, consumedMl: 2750.0)
         XCTAssertEqual(hydration.consumedMl, 2750.0)
 
         hydration.reset()
         XCTAssertEqual(hydration.consumedMl, 0.0)
-        XCTAssertEqual(hydration.remainingMl, 4000.0)
+        XCTAssertEqual(hydration.remainingMl, 3000.0)
         XCTAssertFalse(hydration.isGoalReached)
         XCTAssertEqual(hydration.percentage, 0)
     }
 
     func testCodableSerialization() throws {
-        let original = HydrationDay(date: Date(), targetMl: 4000.0, consumedMl: 2250.0)
+        let original = HydrationDay(date: Date(), targetMl: 3000.0, consumedMl: 2250.0)
         let encoder = JSONEncoder()
         let data = try encoder.encode(original)
 
@@ -84,7 +85,7 @@ final class HydrationTests: XCTestCase {
         let decoded = try decoder.decode(HydrationDay.self, from: data)
 
         XCTAssertEqual(decoded.id, original.id)
-        XCTAssertEqual(decoded.targetMl, 4000.0)
+        XCTAssertEqual(decoded.targetMl, 3000.0)
         XCTAssertEqual(decoded.consumedMl, 2250.0)
         XCTAssertEqual(decoded.percentage, original.percentage)
     }

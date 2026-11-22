@@ -1,12 +1,12 @@
 import Foundation
 
 /// Streaks & Carbon-style Multi-Goal Habit Adherence & Ring Engine.
-/// Tracks 4 daily athletic disciplines: Nutrition, 4.0L Water, Sleep Recovery, and Supplements.
+/// Tracks 4 daily athletic disciplines: Nutrition, 3.0L Water, Sleep Recovery, and Supplements.
 public struct DailyHabitStatus: Codable, Equatable, Sendable, Identifiable {
     public var id: Date { date }
     public var date: Date
     public var isNutritionCompleted: Bool
-    public var isHydrationCompleted: Bool    // >= 4000 ml
+    public var isHydrationCompleted: Bool    // >= targetWaterMl (e.g. 3000 ml)
     public var isSleepCompleted: Bool        // >= 7.0 hours or recoveryScore >= 75
     public var isSupplementsCompleted: Bool
 
@@ -111,7 +111,7 @@ public enum HabitStreakEngine {
             }
         }
 
-        // Hydration streak (4.0L)
+        // Hydration streak (3.0L / target)
         var hydrationStreak = 0
         for item in sorted {
             if item.isHydrationCompleted {

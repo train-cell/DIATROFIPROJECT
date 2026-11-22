@@ -92,6 +92,12 @@ public actor TelemetryService: TelemetryServiceProtocol {
     }
 
     public func log(event: TelemetryEvent) async {
+        // Respect user's privacy toggle in Settings (default enabled when unset)
+        if UserDefaults.standard.object(forKey: "orchard_telemetry_enabled") != nil,
+           !UserDefaults.standard.bool(forKey: "orchard_telemetry_enabled") {
+            return
+        }
+
         guard let data = try? encoder.encode(event),
               var line = String(data: data, encoding: .utf8) else {
             return

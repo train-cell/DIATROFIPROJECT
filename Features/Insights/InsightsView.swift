@@ -580,42 +580,50 @@ public struct InsightsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
-    // MARK: - 6. Goal Weight Projection Section
-    private var goalWeightProjectionSection: some View {
-        let proj = container.weightProjection
+    private var goalWeightDateString: String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "el_GR")
         f.dateFormat = "d MMMM yyyy"
+        return f.string(from: container.weightProjection.targetCompletionDate)
+    }
 
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("ΠΡΟΒΟΛΗ ΣΤΟΧΟΥ ΒΑΡΟΥΣ")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .tracking(0.8)
-
-                Spacer()
-
-                Text("Στόχος: \(String(format: "%.1f", proj.targetWeightKg)) kg")
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(.green)
-            }
-
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(proj.totalDaysNeeded) Ημέρες")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(OrchardColors.text)
-                    Text("Εκτιμώμενη Ολοκλήρωση: \(f.string(from: proj.targetCompletionDate))")
-                        .font(.system(size: 11, design: .rounded))
+    // MARK: - 6. Goal Weight Projection Section
+    @ViewBuilder
+    private var goalWeightProjectionSection: some View {
+        if container.isGoalTrackingEnabled {
+            let proj = container.weightProjection
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("ΠΡΟΒΟΛΗ ΣΤΟΧΟΥ ΒΑΡΟΥΣ")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundStyle(.secondary)
+                        .tracking(0.8)
+
+                    Spacer()
+
+                    Text("Στόχος: \(String(format: "%.1f", proj.targetWeightKg)) kg")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.green)
                 }
-                Spacer()
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(proj.totalDaysNeeded) Ημέρες")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(OrchardColors.text)
+                        Text("Εκτιμώμενη Ολοκλήρωση: \(goalWeightDateString)")
+                            .font(.system(size: 11, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
             }
+            .padding(16)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        } else {
+            goalTrackingDisabledCard(title: "ΠΡΟΒΟΛΗ ΣΤΟΧΟΥ ΒΑΡΟΥΣ")
         }
-        .padding(16)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     // MARK: - 7. Workout Glycogen Fueling Section (Bevel Parity)
@@ -701,42 +709,71 @@ public struct InsightsView: View {
     }
 
     // MARK: - 9. Smart Coaching Check-In Section (RP Diet Parity)
+    @ViewBuilder
     private var coachingCheckInSection: some View {
-        let coach = container.coachingReport
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("SMART WEEKLY COACHING CHECK-IN")
+        if container.isGoalTrackingEnabled {
+            let coach = container.coachingReport
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("SMART WEEKLY COACHING CHECK-IN")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .tracking(0.8)
+
+                    Spacer()
+
+                    Text(coach.goal.titleGreek)
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.purple.opacity(0.15))
+                        .foregroundStyle(.purple)
+                        .clipShape(Capsule())
+                }
+
+                Text(coach.rationale)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(OrchardColors.text)
+
+                if coach.requiresAction {
+                    HStack {
+                        Text("Πρόταση: \(Int(coach.recommendedCalories)) kcal (\(Int(coach.deltaCalories)) kcal)")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(.orange)
+                        Spacer()
+                    }
+                }
+            }
+            .padding(16)
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        } else {
+            goalTrackingDisabledCard(title: "SMART WEEKLY COACHING CHECK-IN")
+        }
+    }
+
+    private func goalTrackingDisabledCard(title: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "target")
+                .font(.system(size: 18))
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
                     .tracking(0.8)
 
-                Spacer()
-
-                Text(coach.goal.titleGreek)
-                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.purple.opacity(0.15))
-                    .foregroundStyle(.purple)
-                    .clipShape(Capsule())
+                Text("Ανενεργό • Ενεργοποίηση από τις Ρυθμίσεις ⚙️")
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundStyle(.secondary)
             }
 
-            Text(coach.rationale)
-                .font(.system(size: 11, design: .rounded))
-                .foregroundStyle(OrchardColors.text)
-
-            if coach.requiresAction {
-                HStack {
-                    Text("Πρόταση: \(Int(coach.recommendedCalories)) kcal (\(Int(coach.deltaCalories)) kcal)")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundStyle(.orange)
-                    Spacer()
-                }
-            }
+            Spacer()
         }
-        .padding(16)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .padding(14)
+        .background(Color(uiColor: .secondarySystemGroupedBackground).opacity(0.6))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     // MARK: - 10. Coach & Biometric RFC 4180 Exporter

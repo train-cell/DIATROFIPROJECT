@@ -11,18 +11,47 @@ settings:
   ENABLE_USER_SCRIPT_SANDBOXING: NO
 
 targets:
+  OrchardDomain:
+    type: framework
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Domain
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.skyd3n.orchardDomain
+      DEVELOPMENT_TEAM: BKSGR5Q3JL
+      GENERATE_INFOPLIST_FILE: YES
+      SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
+      SUPPORTS_MACCATALYST: NO
+
+  OrchardServices:
+    type: framework
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Services
+    dependencies:
+      - target: OrchardDomain
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.skyd3n.orchardServices
+      DEVELOPMENT_TEAM: BKSGR5Q3JL
+      GENERATE_INFOPLIST_FILE: YES
+      SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
+      SUPPORTS_MACCATALYST: NO
+
   Orchard:
     type: application
     platform: iOS
     deploymentTarget: "17.0"
     sources:
       - path: App
-      - path: Domain
-      - path: Services
       - path: Features
       - path: DesignSystem
       - path: Resources
       - path: Widget
+    dependencies:
+      - target: OrchardDomain
+      - target: OrchardServices
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.skyd3n.orchard
       DEVELOPMENT_TEAM: BKSGR5Q3JL
@@ -38,19 +67,39 @@ targets:
     platform: iOS
     deploymentTarget: "17.0"
     sources:
-      - path: Tests
+      - path: Tests/OrchardTests
     dependencies:
       - target: Orchard
+      - target: OrchardDomain
+      - target: OrchardServices
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.skyd3n.orchardTests
       DEVELOPMENT_TEAM: BKSGR5Q3JL
+      GENERATE_INFOPLIST_FILE: YES
       SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
+
+  OrchardUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Tests/OrchardUITests
+    dependencies:
+      - target: Orchard
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.skyd3n.orchardUITests
+      DEVELOPMENT_TEAM: BKSGR5Q3JL
+      GENERATE_INFOPLIST_FILE: YES
+      SUPPORTED_PLATFORMS: "iphonesimulator iphoneos"
+      TEST_TARGET_NAME: Orchard
 
 schemes:
   Orchard:
     build:
       targets:
         Orchard: all
+        OrchardDomain: all
+        OrchardServices: all
     run:
       config: Debug
     test:
@@ -63,3 +112,15 @@ schemes:
       config: Debug
     archive:
       config: Release
+
+  OrchardUITests:
+    build:
+      targets:
+        Orchard: all
+        OrchardUITests: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - OrchardUITests
