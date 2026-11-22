@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Architecture-Clean_Domain_/_Offline--First-34C759?style=flat-square" alt="Clean Architecture" />
   <img src="https://img.shields.io/badge/AI_Coach-Gemini_BYOK_(12--Model_Fallback)-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini BYOK" />
   <img src="https://img.shields.io/badge/Wearable-Apple_Watch_Ultra_3_/_HealthKit-FF2D55?style=flat-square&logo=apple-watch&logoColor=white" alt="Apple Watch HealthKit" />
-  <img src="https://img.shields.io/badge/Tests-188_Xcode_/_173_SwiftPM_Passing-brightgreen?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/Tests-189_Xcode_/_174_SwiftPM_Passing-brightgreen?style=flat-square" alt="Tests" />
   <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="MIT License" />
 </p>
 
@@ -132,6 +132,7 @@ flowchart TD
 
 ```
 The-DIAtrofi-Project/
+├── CHANGELOG.md                     # Full release history & Keep a Changelog documentation
 ├── App/
 │   ├── OrchardApp.swift             # App entry point & Notification delegate setup
 │   └── AppContainer.swift           # Central state, AI actions executor & log persistence
@@ -168,7 +169,7 @@ The-DIAtrofi-Project/
 │   ├── Security/                    # SigningGuard (embedded.mobileprovision parser)
 │   └── Telemetry/                   # Zero-knowledge local JSONL telemetry & rotation
 ├── Resources/                       # Assets, Localizable.xcstrings, plan.sample.json
-├── Tests/OrchardTests/              # 188 Xcode / 173 SwiftPM Automated Tests
+├── Tests/OrchardTests/              # 189 Xcode / 174 SwiftPM Automated Tests
 │   ├── AICoachDomainTests.swift     # Context builder, validator, and service tests
 │   ├── BackendTotalAuditTests.swift # End-to-end integration, schedule matrices & persistence
 │   ├── NewNutritionProtocolTests.swift # Modular menu options, shakes, and weekday filters
@@ -198,8 +199,8 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test \
 ```
 
 ### Test Metrics:
-* **SwiftPM Tests:** **173 passed** (0 failures, ~0.15s execution)
-* **Xcode Simulator Tests:** **188 passed** (0 failures, ~1.15s execution)
+* **SwiftPM Tests:** **174 passed** (0 failures, ~0.15s execution)
+* **Xcode Simulator Tests:** **189 passed** (0 failures, ~0.75s execution)
 * **XCUITest Flows:** **7 complete flows** (Hydration, Day Mode switching, Menu Picker, Plan inspection, Protocol suggestions, Settings toggles, and AI Coach Chat interaction)
 * **Schedule Resolution Matrix:** 35 combination matrix (7 weekdays $\times$ 5 day modes) verified with 0 meal-gap conflicts.
 
@@ -208,9 +209,11 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild test \
 ## 🔒 Privacy & Open Source Safety
 
 * **Dietary Data Protection:** Personal meal plan files (`plan.json` and `Resources/plan.json`) are kept out of source control via `.gitignore`. A complete reference template is provided at [`Resources/plan.sample.json`](Resources/plan.sample.json).
-* **Zero Hardcoded Secrets:** No API keys or tokens are stored in the codebase or git history. Gemini API keys are entered by the user at runtime and stored exclusively in Apple's device Keychain.
+* **Zero Hardcoded Secrets & Header Transport:** No API keys or tokens are stored in the codebase or git history. Gemini API keys are entered by the user at runtime, transmitted strictly via the HTTP `x-goog-api-key` header (never exposed in URL query parameters), and stored exclusively in Apple's device Keychain with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`.
+* **Telemetry Privacy Kill-Switch:** Logging is kept strictly on-device in a rotating local JSONL file (rotated automatically at 1,000 events) and respects the user's disabled Settings toggle with zero network egress.
+* **Local Timezone Awareness:** System prompt generation and schedule timeline resolution respect the athlete's local timezone (`Europe/Athens`), preventing UTC time drift in meal notifications and AI coaching context.
 * **Idempotent HealthKit Writes:** Dietary entries write using unique sync identifiers (`HKMetadataKeySyncIdentifier = "orchard.<uuid>"`), preventing duplicate calorie or macro records.
-* **Local Telemetry:** Logging is kept strictly on-device in a rotating local JSONL file with zero network transmission.
+* **Changelog & Versioning:** Detailed release notes, breaking change notes, and migration history are maintained in [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 

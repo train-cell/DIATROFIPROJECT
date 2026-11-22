@@ -444,4 +444,166 @@ final class AICoachDomainTests: XCTestCase {
         XCTAssertEqual(response.suggestedActions.count, 1)
         XCTAssertEqual(response.suggestedActions[0].kcal, 380.0)
     }
+
+    // MARK: - 4. End-to-End BYOK Pipeline Integration Test (Mocked URLProtocol)
+
+    func testEndToEndBYOKPipelineWithMockedURLProtocol() async throws {
+        BYOKMockURLProtocol.capturedRequests = []
+
+        // 1. Setup mocked URLSession configuration with BYOKMockURLProtocol
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [BYOKMockURLProtocol.self]
+        let mockSession = URLSession(configuration: config)
+
+        let testKey = "test-byok-secret-key-12345"
+
+        // Mocked Gemini API Response with unhydrated actions (nil macros & water)
+        let cannedGeminiJSON = """
+        {
+          "candidates": [
+            {
+              "content": {
+                "parts": [
+                  {
+                    "text": "{\\"replyGreek\\": \\"Κατέγραψα το μεσημεριανό Tupper #1 με σολομό και το recovery shake σου!\\", \\"suggestedActions\\": [{\\"id\\": \\"act_tupper\\", \\"kind\\": \\"meal\\", \\"itemId\\": \\"tupper1\\", \\"selectedOptionId\\": \\"tupper_opt_3\\", \\"title\\": \\"Tupper #1 με Σολομό\\", \\"notes\\": \\"Σολομός 180-200g\\"}, {\\"id\\": \\"act_shake\\", \\"kind\\": \\"supplement\\", \\"itemId\\": \\"post_workout_shake\\", \\"title\\": \\"Μετα-προπονητικό Shake\\", \\"notes\\": \\"Shake αποκατάστασης\\"}]}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+        """
+
+        BYOKMockURLProtocol.responseHandler = { req in
+            let response = HTTPURLResponse(
+                url: req.url!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, cannedGeminiJSON.data(using: .utf8)!)
+        }
+
+        // 2. Configure provider, router and service
+        let provider = GeminiLLMProvider(
+            apiKey: testKey,
+            preferredModel: "gemini-2.5-flash",
+            session: mockSession
+        )
+        let router = LLMRouter(gemini: provider, isEnabled: true)
+        let service = AICoachService(router: router, requiresKey: true, explicitAPIKey: testKey)
+
+        // 3. Setup real plan & Athens local timezone verification
+        let plan = try loadRealPlan()
+        let athensTZ = TimeZone(identifier: "Europe/Athens")!
+        var athensCal = Calendar(identifier: .gregorian)
+        athensCal.timeZone = athensTZ
+
+        var comps = DateComponents()
+        comps.year = 2026; comps.month = 11; comps.day = 2; comps.hour = 10; comps.minute = 30
+        let mondayMorning = athensCal.date(from: comps)!
+
+        // Training session from 15:00 to 16:30 in Athens time
+        var tStartComps = DateComponents()
+        tStartComps.year = 2026; tStartComps.month = 11; tStartComps.day = 2; tStartComps.hour = 15; tStartComps.minute = 0
+        let trainingStart = athensCal.date(from: tStartComps)!
+        let trainingEnd = athensCal.date(byAdding: .minute, value: 90, to: trainingStart)!
+        let actualTrainings = [TrainingSession(startDate: trainingStart, endDate: trainingEnd, durationMinutes: 90, isActual: true)]
+
+        let resolvedEvents = ScheduleResolver.resolve(
+            date: mondayMorning,
+            plan: plan,
+            selectedTemplateName: "training",
+            actualTrainings: actualTrainings,
+            calendar: athensCal
+        )
+
+        let snapshot = AICoachDailySnapshot(
+            date: mondayMorning,
+            weekday: .mon,
+            selectedTemplateKey: "training",
+            resolvedEvents: resolvedEvents,
+            logEntries: [],
+            waterIntakeMl: 500,
+            targetWaterMl: 3000,
+            selectedOptionIds: ["tupper1": "tupper_opt_3"]
+        )
+
+        // Verify NutritionContextBuilder with Europe/Athens TimeZone
+        let prompt = NutritionContextBuilder.buildSystemPrompt(plan: plan, snapshot: snapshot, timeZone: athensTZ)
+        XCTAssertTrue(prompt.contains("10:30"), "Athens local wake/breakfast time must be 10:30")
+        XCTAssertTrue(prompt.contains("14:30"), "Pre-workout item must resolve to 14:30 in Athens time")
+        XCTAssertFalse(prompt.contains("08:30"), "Athens time must not leak UTC 08:30 in prompt")
+
+        // 4. Execute AICoachService.sendMessage
+        let response = try await service.sendMessage(
+            "Έφαγα το μεσημεριανό με σολομό και ήπια το μετα-προπονητικό shake",
+            history: [],
+            plan: plan,
+            snapshot: snapshot
+        )
+
+        // 5. Verify GeminiLLMProvider outgoing HTTP request
+        XCTAssertGreaterThanOrEqual(BYOKMockURLProtocol.capturedRequests.count, 1)
+        let capturedRequest = try XCTUnwrap(BYOKMockURLProtocol.capturedRequests.first)
+        XCTAssertEqual(
+            capturedRequest.value(forHTTPHeaderField: "x-goog-api-key"),
+            testKey,
+            "Must transmit API key securely via x-goog-api-key header"
+        )
+        let queryString = capturedRequest.url?.query ?? ""
+        XCTAssertFalse(queryString.contains("key="), "API key must NEVER be passed as URL query parameter")
+        XCTAssertTrue(
+            capturedRequest.url?.absoluteString.contains("generativelanguage.googleapis.com") == true,
+            "Must target Gemini API endpoint"
+        )
+
+        // 6. Verify AICoachResponseValidator 50/50 deterministic macro & water hydration
+        XCTAssertFalse(response.replyGreek.isEmpty)
+        XCTAssertEqual(response.suggestedActions.count, 2)
+
+        let tupperAction = try XCTUnwrap(response.suggestedActions.first { $0.itemId == "tupper1" })
+        XCTAssertEqual(tupperAction.selectedOptionId, "tupper_opt_3")
+        XCTAssertEqual(tupperAction.kcal, 560.0, "Hydrated kcal from tupper_opt_3")
+        XCTAssertEqual(tupperAction.protein, 54.0, "Hydrated protein from tupper_opt_3")
+        XCTAssertEqual(tupperAction.carbs, 6.0, "Hydrated carbs from tupper_opt_3")
+        XCTAssertEqual(tupperAction.fat, 36.0, "Hydrated fat from tupper_opt_3")
+
+        let shakeAction = try XCTUnwrap(response.suggestedActions.first { $0.itemId == "post_workout_shake" })
+        XCTAssertEqual(shakeAction.waterMl, 500.0, "Hydrated water from post_workout_shake PlanItem")
+        XCTAssertEqual(shakeAction.protein, 30.0, "Hydrated protein from post_workout_shake PlanItem")
+        XCTAssertEqual(shakeAction.kcal, 130.0, "Hydrated kcal from post_workout_shake PlanItem")
+    }
+}
+
+// MARK: - Mock URLProtocol for BYOK E2E Test
+private final class BYOKMockURLProtocol: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var capturedRequests: [URLRequest] = []
+    nonisolated(unsafe) static var responseHandler: ((URLRequest) -> (HTTPURLResponse, Data))?
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        return true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        return request
+    }
+
+    override func startLoading() {
+        Self.capturedRequests.append(request)
+        if let handler = Self.responseHandler {
+            let (response, data) = handler(request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } else {
+            let errorData = "{\"error\": {\"message\": \"No mock handler for request\"}}".data(using: .utf8)!
+            let response = HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: nil, headerFields: nil)!
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: errorData)
+            client?.urlProtocolDidFinishLoading(self)
+        }
+    }
+
+    override func stopLoading() {}
 }

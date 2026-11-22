@@ -704,7 +704,7 @@ public struct SettingsView: View {
             HStack {
                 Text("Έκδοση")
                 Spacer()
-                Text("0.3.0 (M3/M4/M5/M6)")
+                Text("2.0.0 (Modular Protocol & BYOK AI)")
                     .foregroundStyle(.secondary)
             }
 
